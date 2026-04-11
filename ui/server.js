@@ -193,6 +193,15 @@ app.get('/api/micros', (req, res) => {
   res.json({ date, consumed: row, rda });
 });
 
+// ── API: Get yesterday's activity (fallback) ──
+app.get('/api/activity/yesterday', (req, res) => {
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  const data = db.prepare(
+    'SELECT steps, active_calories, exercise_minutes, distance_km, date FROM activity_log WHERE date = ? LIMIT 1'
+  ).get(yesterday);
+  res.json({ data, date: yesterday });
+});
+
 // ── API: Receive Apple Health data (from iOS Shortcut) ──
 app.post('/api/activity', (req, res) => {
   try {

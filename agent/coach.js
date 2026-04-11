@@ -436,7 +436,8 @@ Réponds UNIQUEMENT avec du JSON dans ce format exact :
   // Save to database
   const today = new Date().toISOString().split('T')[0];
   const time = new Date().toTimeString().split(' ')[0];
-  const mealDescription = imageBase64 ? (description || 'Photo de repas — ' + data.items.map(i => i.name).join(', ')) : description;
+  // Always use the identified food names as description (clean, like Foodvisor)
+  const mealDescription = data.items.map(i => i.name).join(', ');
 
   const t = data.totals;
   db.prepare(`

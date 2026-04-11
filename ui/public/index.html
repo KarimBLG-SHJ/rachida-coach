@@ -831,7 +831,7 @@
 
   <!-- 2. Activity today + 30-day bar chart -->
   <div class="card" id="activityCard" style="display:none">
-    <h2>🚶‍♀️ Activite</h2>
+    <h2>🚶‍♀️ Activité <span id="activityLabel" style="font-weight:400;font-size:0.65rem;color:#aaa"></span></h2>
     <div id="activityData" style="font-size:0.85rem"></div>
   </div>
 
@@ -970,15 +970,35 @@ function updateDashboard(d) {
   if (d.activity || (d.weekActivity && d.weekActivity.length > 0)) {
     document.getElementById('activityCard').style.display = '';
     let html = '';
-    if (d.activity) {
-      const dist = d.activity.distance_km ? `<div><div style="font-size:1.3rem;font-weight:700">${d.activity.distance_km.toFixed(1)}</div><div style="font-size:0.7rem;color:#888">km</div></div>` : '';
+    const act = d.activity;
+    const hasToday = act && (act.steps > 0 || act.active_calories > 0);
+
+    if (hasToday) {
+      document.getElementById('activityLabel').textContent = "aujourd'hui";
+      const dist = act.distance_km ? `<div><div style="font-size:1.3rem;font-weight:700">${act.distance_km.toFixed(1)}</div><div style="font-size:0.7rem;color:#888">km</div></div>` : '';
       html += `<div style="display:flex;justify-content:space-around;text-align:center;margin-bottom:8px">
-        <div><div style="font-size:1.3rem;font-weight:700">${(d.activity.steps||0).toLocaleString('fr-FR')}</div><div style="font-size:0.7rem;color:#888">pas</div></div>
-        <div><div style="font-size:1.3rem;font-weight:700">${Math.round(d.activity.active_calories||0)}</div><div style="font-size:0.7rem;color:#888">kcal</div></div>
-        <div><div style="font-size:1.3rem;font-weight:700">${d.activity.exercise_minutes||0}</div><div style="font-size:0.7rem;color:#888">min</div></div>
+        <div><div style="font-size:1.3rem;font-weight:700">${(act.steps||0).toLocaleString('fr-FR')}</div><div style="font-size:0.7rem;color:#888">pas</div></div>
+        <div><div style="font-size:1.3rem;font-weight:700">${Math.round(act.active_calories||0)}</div><div style="font-size:0.7rem;color:#888">kcal</div></div>
+        <div><div style="font-size:1.3rem;font-weight:700">${act.exercise_minutes||0}</div><div style="font-size:0.7rem;color:#888">min</div></div>
         ${dist}
       </div>`;
+    } else if (d.weekActivity && d.weekActivity.length > 0) {
+      // Show yesterday's data when today is empty
+      const yesterday = d.weekActivity[d.weekActivity.length - 1];
+      if (yesterday && yesterday.steps > 0) {
+        document.getElementById('activityLabel').textContent = "hier";
+        html += `<div style="display:flex;justify-content:space-around;text-align:center;margin-bottom:8px">
+          <div><div style="font-size:1.3rem;font-weight:700">${(yesterday.steps||0).toLocaleString('fr-FR')}</div><div style="font-size:0.7rem;color:#888">pas</div></div>
+          <div><div style="font-size:1.3rem;font-weight:700">${Math.round(yesterday.active_calories||0)}</div><div style="font-size:0.7rem;color:#888">kcal</div></div>
+        </div>`;
+      }
     }
+
+    // Manual activity input button
+    html += `<div style="text-align:center;margin:8px 0 4px">
+      <button onclick="showActivityInput()" style="background:none;border:1px solid #ddd;border-radius:16px;padding:5px 14px;font-size:0.7rem;color:#888;cursor:pointer">+ Ajouter activité</button>
+    </div>`;
+
     if (d.weekActivity && d.weekActivity.length > 0) {
       const maxSteps = Math.max(...d.weekActivity.map(a => a.steps || 0));
       const barH = 44;
@@ -1255,6 +1275,37 @@ inputEl.addEventListener('keydown', (e) => {
 
 let selectedDate = new Date().toISOString().split('T')[0];
 
+function showActivityInput() {
+  const card = document.getElementById('activityData');
+  const btn = card.querySelector('button[onclick="showActivityInput()"]');
+  if (!btn) return;
+  btn.outerHTML = `<div style="padding:8px;background:#f8f8f6;border-radius:12px;margin:8px 0">
+    <div style="display:flex;gap:6px;margin-bottom:6px">
+      <input type="number" id="inputSteps" placeholder="Pas" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:0.8rem">
+      <input type="number" id="inputCal" placeholder="Kcal" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:0.8rem">
+      <input type="number" id="inputMin" placeholder="Min" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:0.8rem">
+    </div>
+    <button onclick="saveActivity()" style="width:100%;padding:8px;background:#4CAF50;color:white;border:none;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer">Enregistrer</button>
+  </div>`;
+  document.getElementById('inputSteps').focus();
+}
+
+async function saveActivity() {
+  const steps = parseInt(document.getElementById('inputSteps').value) || 0;
+  const cal = parseInt(document.getElementById('inputCal').value) || 0;
+  const min = parseInt(document.getElementById('inputMin').value) || 0;
+  if (steps === 0 && cal === 0 && min === 0) return;
+
+  try {
+    await fetch('/api/activity', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ steps, active_calories: cal, exercise_minutes: min })
+    });
+    loadDashboard();
+  } catch(e) {}
+}
+
 async function sendPhoto(input) {
   const file = input.files[0];
   if (!file) return;
@@ -1314,14 +1365,18 @@ function renderMeals(meals) {
     mealsEl.innerHTML = '<span class="empty">Aucun repas enregistré</span>';
     return;
   }
+  const typeNames = {breakfast:'Petit-déj',lunch:'Déjeuner',dinner:'Dîner',snack:'Collation'};
+  const typeEmojis = {breakfast:'🌅',lunch:'🍽️',dinner:'🌙',snack:'🫐'};
   mealsEl.innerHTML = meals.map(m => {
-    const emoji = {breakfast:'🌅',lunch:'🍽️',dinner:'🌙',snack:'🫐'}[m.meal_type] || '🍴';
-    const desc = m.description.length > 28 ? m.description.substring(0,28) + '...' : m.description;
-    return `<div class="meal-item">
-      <span>${emoji} ${desc}</span>
-      <span>${Math.round(m.calories)} kcal
-        <span class="meal-actions"><button class="meal-del" onclick="deleteMeal(${m.id})">🗑️</button></span>
-      </span>
+    const title = typeNames[m.meal_type] || m.meal_type;
+    const emoji = typeEmojis[m.meal_type] || '🍴';
+    const desc = m.description.length > 35 ? m.description.substring(0,35) + '...' : m.description;
+    return `<div class="meal-item" style="flex-direction:column;align-items:stretch;gap:2px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong>${emoji} ${title}</strong>
+        <span>${Math.round(m.calories)} kcal <span class="meal-actions"><button class="meal-del" onclick="deleteMeal(${m.id})">🗑️</button></span></span>
+      </div>
+      <div style="font-size:0.72rem;color:#999">${desc}</div>
     </div>`;
   }).join('');
 }
