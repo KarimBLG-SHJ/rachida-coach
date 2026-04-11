@@ -57,15 +57,27 @@ app.post('/api/chat', async (req, res) => {
 
     // Detect meal in free text (but NOT supplements/medications)
     const msg = message.toLowerCase();
-    const mealWords = ['mangé', 'bu', 'déjeuner', 'dîner', 'petit-déj', 'snack', 'collation', 'repas', "j'ai eu"];
-    const notMealWords = ['vitamine', 'magnésium', 'oméga', 'complément', 'médicament', 'comprimé', 'glucophage', 'pris ma', 'pris mon'];
+    const mealWords = ['mangé', 'bu', 'déjeuner', 'dîner', 'petit-déj', 'snack', 'collation', 'repas', "j'ai eu", 'ce soir', 'ce midi', 'ce matin', 'petit déj'];
+    const notMealWords = ['vitamine', 'magnésium', 'oméga', 'complément', 'médicament', 'comprimé', 'glucophage', 'pris ma', 'pris mon', 'combien de calories', 'idée', 'propose', 'suggestion'];
     const looksLikeMeal = mealWords.some(w => msg.includes(w)) && !notMealWords.some(w => msg.includes(w));
 
     let response;
     if (looksLikeMeal) {
-      const hour = new Date().getHours();
-      const mealType = hour < 11 ? 'breakfast' : hour < 15 ? 'lunch' : hour < 18 ? 'snack' : 'dinner';
+      // Detect meal type from keywords first, then fallback to time
+      let mealType;
+      if (msg.includes('petit-déj') || msg.includes('petit déj') || msg.includes('ce matin')) mealType = 'breakfast';
+      else if (msg.includes('déjeuner') || msg.includes('ce midi') || msg.includes('midi')) mealType = 'lunch';
+      else if (msg.includes('dîner') || msg.includes('ce soir') || msg.includes('soir') || msg.includes('repas du soir')) mealType = 'dinner';
+      else if (msg.includes('snack') || msg.includes('collation') || msg.includes('goûter')) mealType = 'snack';
+      else {
+        const hour = new Date().getHours();
+        mealType = hour < 11 ? 'breakfast' : hour < 15 ? 'lunch' : hour < 18 ? 'snack' : 'dinner';
+      }
       response = await logMeal(message, mealType);
+      // Keep meal in chat history so coach remembers
+      chatHistory.push({ role: 'user', content: message });
+      chatHistory.push({ role: 'assistant', content: 'Repas enregistré : ' + message });
+      if (chatHistory.length > 20) chatHistory.splice(0, 2);
     } else {
       response = await chat(message, chatHistory);
       chatHistory.push({ role: 'user', content: message });
