@@ -216,25 +216,75 @@ export async function syncActivity(days = 7) {
  * Sync latest weight to database
  * Call this on a schedule (morning) or on demand
  */
+/**
+ * Sync ALL weight measurements from the last 30 days
+ */
 export async function syncWeight() {
-  const data = await getLatestWeight();
-  if (!data || !data.weight_kg) return null;
+  try {
+    const token = await getAccessToken();
 
-  // Check if we already have this measurement
-  const existing = db.prepare(
-    'SELECT id FROM weight_log WHERE date = ? AND source = ? LIMIT 1'
-  ).get(data.date, 'withings');
+    const response = await axios.post(`${WITHINGS_API}/measure`, new URLSearchParams({
+      action: 'getmeas',
+      meastype: '1,5,6,8,11,76,77,88,122',
+      category: 1,
+      lastupdate: Math.floor(Date.now() / 1000) - 86400 * 30
+    }), {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-  if (existing) return null; // Already synced
+    if (response.data.status !== 0) {
+      console.error('[Withings] API error:', JSON.stringify(response.data));
+      return null;
+    }
 
-  db.prepare(`
-    INSERT INTO weight_log (date, time, weight_kg, fat_percent, muscle_percent, bone_mass_kg, hydration_percent, source)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 'withings')
-  `).run(data.date, data.time, data.weight_kg, data.fat_percent,
-    data.muscle_mass_kg, data.bone_mass_kg, data.hydration_percent);
+    const groups = response.data.body.measuregrps;
+    if (!groups || groups.length === 0) return null;
 
-  console.log(`[Withings] Synced: ${data.weight_kg} kg | fat ${data.fat_percent}% | muscle ${data.muscle_mass_kg}kg | bone ${data.bone_mass_kg}kg | hydration ${data.hydration_percent}% | visceral fat ${data.visceral_fat} | HR ${data.heart_rate}`);
-  return data;
+    let synced = 0;
+    let latest = null;
+
+    for (const grp of groups) {
+      const date = new Date(grp.date * 1000).toISOString().split('T')[0];
+      const time = new Date(grp.date * 1000).toTimeString().split(' ')[0];
+
+      // Check if already synced
+      const existing = db.prepare(
+        'SELECT id FROM weight_log WHERE date = ? AND source = ? LIMIT 1'
+      ).get(date, 'withings');
+      if (existing) continue;
+
+      const measures = {};
+      for (const m of grp.measures) {
+        const value = m.value * Math.pow(10, m.unit);
+        switch (m.type) {
+          case 1:   measures.weight_kg = Math.round(value * 10) / 10; break;
+          case 6:   measures.fat_percent = Math.round(value * 10) / 10; break;
+          case 8:   measures.fat_mass_kg = Math.round(value * 10) / 10; break;
+          case 76:  measures.muscle_mass_kg = Math.round(value * 10) / 10; break;
+          case 77:  measures.hydration_percent = Math.round(value * 10) / 10; break;
+          case 88:  measures.bone_mass_kg = Math.round(value * 100) / 100; break;
+          case 122: measures.visceral_fat = Math.round(value); break;
+        }
+      }
+
+      if (!measures.weight_kg) continue;
+
+      db.prepare(`
+        INSERT INTO weight_log (date, time, weight_kg, fat_percent, muscle_percent, bone_mass_kg, hydration_percent, source)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'withings')
+      `).run(date, time, measures.weight_kg, measures.fat_percent || null,
+        measures.muscle_mass_kg || null, measures.bone_mass_kg || null, measures.hydration_percent || null);
+
+      synced++;
+      if (!latest) latest = { ...measures, date, time, source: 'withings' };
+    }
+
+    console.log(`[Withings] Synced ${synced} weight measurements`);
+    return latest;
+  } catch (error) {
+    console.error('[Withings] Sync error:', error.message);
+    return null;
+  }
 }
 
 // ─────────────────────────────────────────────

@@ -248,11 +248,11 @@ app.get('/api/withings/callback', async (req, res) => {
   }
 });
 
-// Manual sync trigger — weight + activity
+// Manual sync trigger — weight + activity (30 days)
 app.get('/api/withings/sync', async (req, res) => {
   try {
     const weight = await syncWeight();
-    const activity = await syncActivity(7);
+    const activity = await syncActivity(30);
     res.json({ synced: true, weight, activity });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -310,7 +310,7 @@ function getDashboardData() {
   ).get();
 
   const weightHistory = db.prepare(
-    "SELECT date, weight_kg FROM weight_log WHERE date >= date('now', '-14 days') ORDER BY date ASC"
+    "SELECT date, weight_kg FROM weight_log WHERE date >= date('now', '-30 days') ORDER BY date ASC"
   ).all();
 
   const meds = listMedications();
@@ -339,7 +339,7 @@ function getDashboardData() {
 
   const weekActivity = db.prepare(`
     SELECT date, steps, active_calories FROM activity_log
-    WHERE date >= date('now', '-7 days') ORDER BY date ASC
+    WHERE date >= date('now', '-30 days') ORDER BY date ASC
   `).all();
 
   return {
