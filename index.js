@@ -2,8 +2,21 @@
 // index.js — Rachida Health Coach v2.0
 
 import './env.js';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { createInterface } from 'readline';
 import chalk from 'chalk';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+function initDatabase() {
+  const db = new Database(join(__dirname, 'db', 'health.db'));
+  const schema = readFileSync(join(__dirname, 'db', 'schema.sql'), 'utf-8');
+  db.exec(schema);
+  db.close();
+  console.log('✅ Database initialized');
+}
 import { startSmartScheduler } from './reminders/smart-schedule.js';
 import { logMeal, generateMorningBrief, chat } from './agent/coach.js';
 import { calculateDailyTargets, getTodayConsumed, getTodayTargets } from './agent/macros.js';
@@ -15,6 +28,9 @@ import { listMedications, formatMedicationSchedule } from './commands/medication
 import { generateDailyReport } from './ui/daily-report.js';
 import { startWebUI } from './ui/server.js';
 import Database from 'better-sqlite3';
+
+// Also init DB in setup and daemon
+
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -37,12 +53,14 @@ async function main() {
       break;
 
     case 'web':
+      initDatabase();
       calculateDailyTargets();
       startWebUI(3000);
       startSmartScheduler();
       break;
 
     case 'daemon':
+      initDatabase();
       console.log(chalk.green('🧠 Smart reminders running — Dubai timezone'));
       calculateDailyTargets();
       startSmartScheduler();
