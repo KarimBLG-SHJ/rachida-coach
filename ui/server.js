@@ -211,6 +211,17 @@ app.post('/api/activity', (req, res) => {
   }
 });
 
+// ── API: Withings OAuth callback ─────────────
+app.get('/api/withings/callback', (req, res) => {
+  const { code, state } = req.query;
+  if (code) {
+    console.log('[Withings] OAuth code received:', code.substring(0, 10) + '...');
+    res.send('<html><body><h2>Withings connecté !</h2><p>Tu peux fermer cette page.</p></body></html>');
+  } else {
+    res.send('<html><body><h2>OK</h2></body></html>');
+  }
+});
+
 // ── API: Morning brief ──────────────────────
 app.get('/api/brief', async (req, res) => {
   try {
