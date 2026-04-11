@@ -281,7 +281,7 @@ function buildChatContext() {
   ).get(new Date().toISOString().split('T')[0]);
 
   const weekActivity = db.prepare(
-    'SELECT ROUND(AVG(steps)) as avg_steps, ROUND(AVG(active_calories)) as avg_cal, COUNT(*) as days FROM activity_log WHERE date >= date("now", "-7 days")'
+    "SELECT ROUND(AVG(steps)) as avg_steps, ROUND(AVG(active_calories)) as avg_cal, COUNT(*) as days FROM activity_log WHERE date >= date('now', '-7 days')"
   ).get();
 
   let activityContext = 'Pas de données d\'activité aujourd\'hui.';

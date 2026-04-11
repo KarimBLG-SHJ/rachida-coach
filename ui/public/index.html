@@ -815,22 +815,26 @@
   <h1>Rachida</h1>
   <div class="date" id="dateLabel"></div>
 
+  <!-- 1. Weight + body comp + sparkline -->
   <div class="card" id="weightCard" style="display:none">
     <h2>⚖️ Poids</h2>
     <div class="weight-big"><span id="weightValue">—</span> <span>kg</span></div>
     <div id="bodyComp" style="font-size:0.75rem;color:#888;margin-top:6px;line-height:1.6"></div>
+    <div id="weightSparkline" style="margin-top:8px"></div>
   </div>
 
+  <!-- 2. Activity today + 30-day bar chart -->
   <div class="card" id="activityCard" style="display:none">
-    <h2>🚶‍♀️ Activité</h2>
+    <h2>🚶‍♀️ Activite</h2>
     <div id="activityData" style="font-size:0.85rem"></div>
   </div>
 
+  <!-- 3. Macros progress bars -->
   <div class="card">
     <h2>🎯 Macros du jour</h2>
     <div class="macro-row"><span>Calories</span><span id="calLabel">0 / 0 kcal</span></div>
     <div class="macro-bar"><div class="macro-fill cal" id="calBar" style="width:0%">0%</div></div>
-    <div class="macro-row"><span>Protéines</span><span id="protLabel">0 / 0g</span></div>
+    <div class="macro-row"><span>Proteines</span><span id="protLabel">0 / 0g</span></div>
     <div class="macro-bar"><div class="macro-fill prot" id="protBar" style="width:0%">0%</div></div>
     <div class="macro-row"><span>Lipides</span><span id="fatLabel">0 / 0g</span></div>
     <div class="macro-bar"><div class="macro-fill fat" id="fatBar" style="width:0%">0%</div></div>
@@ -838,25 +842,29 @@
     <div class="macro-bar"><div class="macro-fill carbs" id="carbsBar" style="width:0%">0%</div></div>
   </div>
 
+  <!-- 4. Meals with 7-day nav + delete -->
   <div class="card">
     <h2>🍽️ Repas <span id="mealDate" style="font-weight:400;color:#999;font-size:0.7rem"></span></h2>
     <div class="day-nav" id="dayNav"></div>
-    <div id="mealsList"><span class="empty">Aucun repas enregistré</span></div>
+    <div id="mealsList"><span class="empty">Aucun repas enregistre</span></div>
   </div>
 
+  <!-- 5. Micronutrients (collapsible) -->
   <div class="card" id="microsCard" style="display:none">
     <h2 style="cursor:pointer" onclick="document.getElementById('microsBody').style.display = document.getElementById('microsBody').style.display === 'none' ? '' : 'none'">🔬 Micronutriments ▾</h2>
     <div id="microsBody"></div>
   </div>
 
+  <!-- 6. Supplements with checkboxes -->
   <div class="card">
-    <h2>💊 Compléments</h2>
+    <h2>💊 Complements</h2>
     <div id="suppsList"></div>
   </div>
 
+  <!-- 7. Medications -->
   <div class="card">
-    <h2>💊 Médicaments</h2>
-    <div id="medsList"><span class="empty">Aucun médicament</span></div>
+    <h2>💊 Medicaments</h2>
+    <div id="medsList"><span class="empty">Aucun medicament</span></div>
   </div>
 </div>
 
@@ -912,38 +920,74 @@ function updateDashboard(d) {
   document.getElementById('dateLabel').textContent =
     `${days[now.getDay()]} ${now.toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})}`;
 
-  // Weight + body composition
+  // ── 1. Weight + body composition + sparkline ──
   if (d.weight) {
     document.getElementById('weightCard').style.display = '';
     document.getElementById('weightValue').textContent = d.weight.weight_kg;
     let comp = '';
-    if (d.weight.fat_percent) comp += `Graisse ${d.weight.fat_percent}% · `;
-    if (d.weight.muscle_percent) comp += `Muscle ${d.weight.muscle_percent}kg · `;
-    if (d.weight.hydration_percent) comp += `Hydratation ${d.weight.hydration_percent}% · `;
+    if (d.weight.fat_percent) comp += `Graisse ${d.weight.fat_percent}% \u00b7 `;
+    if (d.weight.muscle_percent) comp += `Muscle ${d.weight.muscle_percent}kg \u00b7 `;
+    if (d.weight.hydration_percent) comp += `Hydratation ${d.weight.hydration_percent}% \u00b7 `;
     if (d.weight.bone_mass_kg) comp += `Os ${d.weight.bone_mass_kg}kg`;
-    document.getElementById('bodyComp').textContent = comp.replace(/ · $/, '');
+    document.getElementById('bodyComp').textContent = comp.replace(/ \u00b7 $/, '');
+
+    // Weight sparkline (inline SVG, 30 days)
+    const sparkEl = document.getElementById('weightSparkline');
+    if (d.weightHistory && d.weightHistory.length > 1) {
+      const pts = d.weightHistory.map(h => h.weight_kg);
+      const minW = Math.min(...pts) - 0.3;
+      const maxW = Math.max(...pts) + 0.3;
+      const rangeW = maxW - minW || 1;
+      const w = 220, h = 40, pad = 2;
+      const coords = pts.map((v, i) => {
+        const x = pad + (i / (pts.length - 1)) * (w - 2 * pad);
+        const y = pad + (1 - (v - minW) / rangeW) * (h - 2 * pad);
+        return `${x},${y}`;
+      });
+      const first = pts[0], last = pts[pts.length - 1];
+      const diff = (last - first).toFixed(1);
+      const diffLabel = diff > 0 ? `+${diff}` : `${diff}`;
+      const diffColor = diff <= 0 ? '#66BB6A' : '#EF5350';
+      sparkEl.innerHTML = `
+        <svg width="100%" viewBox="0 0 ${w} ${h + 14}" preserveAspectRatio="none" style="display:block">
+          <polyline fill="none" stroke="#42A5F5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="${coords.join(' ')}"/>
+          <circle cx="${coords[coords.length-1].split(',')[0]}" cy="${coords[coords.length-1].split(',')[1]}" r="2.5" fill="#42A5F5"/>
+          <text x="${w - pad}" y="${h + 12}" text-anchor="end" font-size="9" fill="${diffColor}">${diffLabel} kg / 30j</text>
+          <text x="${pad}" y="${h + 12}" font-size="9" fill="#888">${pts[pts.length-1]} kg</text>
+        </svg>`;
+    } else {
+      sparkEl.innerHTML = '';
+    }
   }
 
-  // Activity
+  // ── 2. Activity today + 30-day bar chart ──
   if (d.activity || (d.weekActivity && d.weekActivity.length > 0)) {
     document.getElementById('activityCard').style.display = '';
     let html = '';
     if (d.activity) {
+      const dist = d.activity.distance_km ? `<div><div style="font-size:1.3rem;font-weight:700">${d.activity.distance_km.toFixed(1)}</div><div style="font-size:0.7rem;color:#888">km</div></div>` : '';
       html += `<div style="display:flex;justify-content:space-around;text-align:center;margin-bottom:8px">
         <div><div style="font-size:1.3rem;font-weight:700">${(d.activity.steps||0).toLocaleString('fr-FR')}</div><div style="font-size:0.7rem;color:#888">pas</div></div>
         <div><div style="font-size:1.3rem;font-weight:700">${Math.round(d.activity.active_calories||0)}</div><div style="font-size:0.7rem;color:#888">kcal</div></div>
         <div><div style="font-size:1.3rem;font-weight:700">${d.activity.exercise_minutes||0}</div><div style="font-size:0.7rem;color:#888">min</div></div>
+        ${dist}
       </div>`;
     }
     if (d.weekActivity && d.weekActivity.length > 0) {
-      const maxSteps = Math.max(...d.weekActivity.map(a => a.steps));
-      html += `<div style="display:flex;align-items:flex-end;gap:3px;height:40px;margin-top:8px">`;
-      d.weekActivity.forEach(a => {
-        const h = maxSteps > 0 ? Math.max(4, Math.round((a.steps / maxSteps) * 36)) : 4;
+      const maxSteps = Math.max(...d.weekActivity.map(a => a.steps || 0));
+      const barH = 44;
+      html += `<div style="display:flex;align-items:flex-end;gap:2px;height:${barH + 14}px;margin-top:8px">`;
+      d.weekActivity.forEach((a, i) => {
+        const steps = a.steps || 0;
+        const h = maxSteps > 0 ? Math.max(3, Math.round((steps / maxSteps) * barH)) : 3;
+        const isToday = i === d.weekActivity.length - 1;
+        const color = isToday ? '#42A5F5' : '#66BB6A';
+        const opacity = isToday ? '1' : '0.7';
         const day = new Date(a.date + 'T12:00').toLocaleDateString('fr-FR', {weekday:'narrow'});
-        html += `<div style="flex:1;text-align:center">
-          <div style="background:#66BB6A;border-radius:3px;height:${h}px;margin:0 auto;width:80%"></div>
-          <div style="font-size:0.55rem;color:#aaa;margin-top:2px">${day}</div>
+        const showLabel = d.weekActivity.length <= 14 || i % 3 === 0 || isToday;
+        html += `<div style="flex:1;text-align:center" title="${a.date}: ${steps.toLocaleString('fr-FR')} pas / ${Math.round(a.active_calories||0)} kcal">
+          <div style="background:${color};opacity:${opacity};border-radius:2px;height:${h}px;margin:0 auto;width:80%"></div>
+          <div style="font-size:0.5rem;color:#aaa;margin-top:2px">${showLabel ? day : ''}</div>
         </div>`;
       });
       html += `</div>`;
@@ -951,7 +995,7 @@ function updateDashboard(d) {
     document.getElementById('activityData').innerHTML = html;
   }
 
-  // Macros
+  // ── 3. Macros ──
   const c = d.consumed, t = d.targets;
   document.getElementById('calLabel').textContent = `${Math.round(c.calories)} / ${t.calories_target} kcal`;
   document.getElementById('protLabel').textContent = `${Math.round(c.protein_g)} / ${t.protein_target_g}g`;
@@ -963,18 +1007,18 @@ function updateDashboard(d) {
   setBar('fatBar', d.fatPct, 'fat');
   setBar('carbsBar', d.carbsPct, 'carbs');
 
-  // Meals
+  // ── 4. Meals ──
   renderMeals(d.meals);
 
-  // Supplements with checkboxes
+  // ── 5. Supplements with checkboxes grouped by timing ──
   const suppsEl = document.getElementById('suppsList');
   if (d.supplements && d.supplements.length > 0) {
     const groups = {
-      'morning_empty': '🌅 Matin (à jeun)',
-      'morning_with_food': '🌅 Matin (avec petit-déj)',
-      'lunch': '☀️ Midi (avec déjeuner)',
-      'before_dinner': '🌆 Avant dîner (30 min)',
-      'evening_before_sleep': '🌙 Soir (avant sommeil)'
+      'morning_empty': '\uD83C\uDF05 Matin (\u00e0 jeun)',
+      'morning_with_food': '\uD83C\uDF05 Matin (avec petit-d\u00e9j)',
+      'lunch': '\u2600\uFE0F Midi (avec d\u00e9jeuner)',
+      'before_dinner': '\uD83C\uDF06 Avant d\u00eener (30 min)',
+      'evening_before_sleep': '\uD83C\uDF19 Soir (avant sommeil)'
     };
     let html = '';
     for (const [timing, label] of Object.entries(groups)) {
@@ -987,7 +1031,7 @@ function updateDashboard(d) {
         const timeStr = s.taken_at ? s.taken_at.substring(0,5) : s.reminder_time;
         html += `<label class="supp-check${takenCls}">
           <input type="checkbox" ${checked} onchange="toggleSupp('${s.id}', this)">
-          <span>${s.name} — ${s.dose}</span>
+          <span>${s.name} \u2014 ${s.dose}</span>
           <span class="supp-time">${timeStr}</span>
         </label>`;
       });
@@ -995,13 +1039,13 @@ function updateDashboard(d) {
     suppsEl.innerHTML = html;
   }
 
-  // Medications
+  // ── 6. Medications ──
   const medsEl = document.getElementById('medsList');
-  if (d.medications.length === 0) {
-    medsEl.innerHTML = '<span class="empty">Aucun médicament</span>';
+  if (!d.medications || d.medications.length === 0) {
+    medsEl.innerHTML = '<span class="empty">Aucun m\u00e9dicament</span>';
   } else {
     medsEl.innerHTML = d.medications.map(m =>
-      `<div class="med-item">💊 ${m.name}${m.dose ? ' — '+m.dose : ''}</div>`
+      `<div class="med-item">\uD83D\uDC8A ${m.name}${m.dose ? ' \u2014 '+m.dose : ''}</div>`
     ).join('');
   }
 }
