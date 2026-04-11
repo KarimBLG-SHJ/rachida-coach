@@ -239,6 +239,105 @@
   .micro-fill.good { background: #66BB6A; }
   .micro-fill.high { background: #42A5F5; }
 
+  /* Meal card in chat */
+  .meal-card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e8e6e1;
+    overflow: hidden;
+    max-width: 85%;
+    align-self: flex-start;
+    font-size: 0.85rem;
+  }
+
+  .meal-card-header {
+    background: linear-gradient(135deg, #4CAF50, #66BB6A);
+    color: white;
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .meal-card-items {
+    padding: 12px 16px;
+  }
+
+  .meal-card-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid #f5f5f5;
+  }
+
+  .meal-card-item:last-child { border: none; }
+  .meal-card-item .name { color: #333; }
+  .meal-card-item .kcal { color: #888; font-variant-numeric: tabular-nums; }
+
+  .meal-card-total {
+    background: #f8f7f4;
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    border-top: 2px solid #e8e6e1;
+  }
+
+  .meal-card-progress {
+    padding: 12px 16px;
+    background: #fafaf8;
+  }
+
+  .meal-card-progress .pline {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #555;
+    margin-bottom: 4px;
+  }
+
+  .meal-card-tip {
+    padding: 12px 16px;
+    background: #fff9e6;
+    border-top: 1px solid #f0e6c0;
+    font-size: 0.8rem;
+    color: #7a6c3a;
+  }
+
+  .meal-card-tip strong { color: #5a4e2a; }
+
+  .meal-card-actions {
+    padding: 8px 16px;
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  .btn-correct {
+    padding: 6px 14px;
+    background: #fff3e0;
+    border: 1px solid #ffe0b2;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    color: #e65100;
+    transition: all 0.2s;
+  }
+
+  .btn-correct:hover { background: #ffe0b2; }
+
+  .btn-save {
+    padding: 6px 14px;
+    background: #e8f5e9;
+    border: 1px solid #c8e6c9;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    color: #2e7d32;
+    transition: all 0.2s;
+  }
+
+  .btn-save:hover { background: #c8e6c9; }
+
   .empty { color: #bbb; font-style: italic; font-size: 0.8rem; }
 
   /* ── RIGHT: Chat ─────────────────── */
@@ -595,12 +694,118 @@ function sendQuick(text) {
 }
 
 function addMessage(text, type) {
+  // Try to render meal responses as rich cards
+  if (type === 'coach' && text.includes('enregistré') && text.includes('kcal |')) {
+    return addMealCard(text);
+  }
+
   const el = document.createElement('div');
   el.className = 'msg ' + type;
   el.textContent = text;
   messagesEl.appendChild(el);
   messagesEl.scrollTop = messagesEl.scrollHeight;
   return el;
+}
+
+function addMealCard(text) {
+  const lines = text.trim().split('\n').filter(l => l.trim());
+
+  // Parse header
+  const headerLine = lines.find(l => l.includes('enregistré')) || 'Repas enregistré';
+
+  // Parse food items (lines with "kcal |")
+  const items = lines.filter(l => l.includes('kcal |') && !l.includes('Total')).map(l => {
+    const match = l.match(/^(.+?)\s+\((\d+)g\)\s+(\d+)\s*kcal\s*\|\s*P:\s*([\d.]+)g\s*\|\s*L:\s*([\d.]+)g\s*\|\s*G:\s*([\d.]+)g/);
+    if (match) return { name: match[1].trim(), qty: match[2], cal: match[3], p: match[4], l: match[5], g: match[6] };
+    return null;
+  }).filter(Boolean);
+
+  // Parse total
+  const totalLine = lines.find(l => l.includes('Total'));
+  const totalMatch = totalLine?.match(/(\d+)\s*kcal\s*\|\s*P:\s*([\d.]+)g\s*\|\s*L:\s*([\d.]+)g\s*\|\s*G:\s*([\d.]+)g/);
+
+  // Parse progress
+  const calLine = lines.find(l => l.includes('Consommé'));
+  const protLine = lines.find(l => l.includes('Protéines'));
+  const resteLine = lines.find(l => l.includes('Il te reste'));
+
+  // Parse tip
+  const tipIdx = lines.findIndex(l => l.includes('Prochain repas'));
+  const tipLine = tipIdx >= 0 ? lines[tipIdx].replace('💡 ', '').replace('Prochain repas : ', '') : '';
+  const whyLine = lines[tipIdx + 1]?.replace('Pourquoi : ', '').trim() || '';
+
+  // Build card
+  const card = document.createElement('div');
+  card.className = 'meal-card';
+
+  card.innerHTML = `
+    <div class="meal-card-header">${headerLine.replace(/\n/g, '')}</div>
+    <div class="meal-card-items">
+      ${items.map(i => `<div class="meal-card-item">
+        <span class="name">${i.name} <span style="color:#aaa">(${i.qty}g)</span></span>
+        <span class="kcal">${i.cal} kcal</span>
+      </div>`).join('')}
+    </div>
+    ${totalMatch ? `<div class="meal-card-total">
+      <span>Total</span>
+      <span>${totalMatch[1]} kcal — P:${totalMatch[2]}g L:${totalMatch[3]}g G:${totalMatch[4]}g</span>
+    </div>` : ''}
+    <div class="meal-card-progress">
+      ${calLine ? `<div class="pline"><span>📊 ${calLine.replace('📊 ', '').trim()}</span></div>` : ''}
+      ${protLine ? `<div class="pline"><span>${protLine.trim()}</span></div>` : ''}
+      ${resteLine ? `<div class="pline"><span><strong>${resteLine.trim()}</strong></span></div>` : ''}
+    </div>
+    ${tipLine ? `<div class="meal-card-tip">
+      <strong>💡 ${tipLine}</strong><br>${whyLine}
+    </div>` : ''}
+    <div class="meal-card-actions">
+      <button class="btn-correct" onclick="correctMeal(this)">✏️ Corriger</button>
+    </div>
+  `;
+
+  messagesEl.appendChild(card);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return card;
+}
+
+function correctMeal(btn) {
+  const card = btn.closest('.meal-card');
+  const actions = card.querySelector('.meal-card-actions');
+  actions.innerHTML = `
+    <input type="text" id="correctionInput" placeholder="Ex: c'est un curry de crevettes, 250g de riz"
+      style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:16px;font-size:0.8rem;outline:none">
+    <button class="btn-save" onclick="sendCorrection(this)">✅ Recalculer</button>
+  `;
+  document.getElementById('correctionInput').focus();
+  document.getElementById('correctionInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendCorrection(actions.querySelector('.btn-save'));
+  });
+}
+
+async function sendCorrection(btn) {
+  const card = btn.closest('.meal-card');
+  const input = card.querySelector('#correctionInput');
+  const correction = input.value.trim();
+  if (!correction) return;
+
+  card.querySelector('.meal-card-actions').innerHTML = '<span style="color:#888;font-size:0.75rem">⏳ Recalcul en cours...</span>';
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: `Correction de mon dernier repas : ${correction}. Recalcule les calories et macros avec ces informations.` })
+    });
+    const data = await res.json();
+
+    // Remove old card, add corrected response
+    card.remove();
+    addMessage('✏️ Correction : ' + correction, 'user');
+    addMessage(data.response, 'coach');
+    if (data.dashboard) updateDashboard(data.dashboard);
+  } catch(e) {
+    card.querySelector('.meal-card-actions').innerHTML = '<button class="btn-correct" onclick="correctMeal(this)">✏️ Corriger</button>';
+  }
 }
 
 inputEl.addEventListener('keydown', (e) => {
