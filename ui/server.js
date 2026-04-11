@@ -24,6 +24,30 @@ app.use(express.static(join(__dirname, 'public')));
 // Chat history per session
 let chatHistory = [];
 
+// Increase body limit for image uploads (5MB)
+app.use('/api/meal-photo', express.json({ limit: '5mb' }));
+
+// ── API: Meal photo analysis ────────────────
+app.post('/api/meal-photo', async (req, res) => {
+  try {
+    const { image, message } = req.body;
+    if (!image) return res.status(400).json({ error: 'image required' });
+
+    console.log('[Photo] Analyzing meal photo...');
+    const hour = new Date().getHours();
+    const mealType = hour < 11 ? 'breakfast' : hour < 15 ? 'lunch' : hour < 18 ? 'snack' : 'dinner';
+
+    // Strip data URL prefix if present
+    const base64 = image.replace(/^data:image\/\w+;base64,/, '');
+    const response = await logMeal(message || '', mealType, base64);
+
+    res.json({ response, dashboard: getDashboardData() });
+  } catch (err) {
+    console.error('[Photo error]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── API: Chat with coach ────────────────────
 app.post('/api/chat', async (req, res) => {
   try {

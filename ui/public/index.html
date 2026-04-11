@@ -347,6 +347,18 @@
   .chat-input button:hover { background: #43A047; }
   .chat-input button:disabled { background: #ccc; cursor: not-allowed; }
 
+  .photo-btn {
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+  }
+
+  .photo-btn:hover { background: #e8f5e9; }
+
   .quick-actions {
     padding: 8px 24px;
     background: white;
@@ -441,6 +453,10 @@
   </div>
 
   <div class="chat-input">
+    <label class="photo-btn" title="Prends en photo ton plat">
+      📸
+      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="sendPhoto(this)">
+    </label>
     <input type="text" id="chatInput" placeholder="Dis quelque chose à ton coach..." autocomplete="off">
     <button id="sendBtn" onclick="sendMessage()">Envoyer</button>
   </div>
@@ -595,6 +611,47 @@ inputEl.addEventListener('keydown', (e) => {
 });
 
 let selectedDate = new Date().toISOString().split('T')[0];
+
+async function sendPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = ''; // reset for next use
+
+  addMessage('📸 Photo envoyée — analyse en cours...', 'user');
+  const loadingEl = addMessage('Je regarde ton plat...', 'loading');
+  sendBtn.disabled = true;
+
+  try {
+    // Convert to base64
+    const base64 = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsDataURL(file);
+    });
+
+    const res = await fetch('/api/meal-photo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64, message: chatInput.value.trim() || '' })
+    });
+
+    const data = await res.json();
+    loadingEl.remove();
+
+    if (data.error) {
+      addMessage('Erreur : ' + data.error, 'system');
+    } else {
+      addMessage(data.response, 'coach');
+      if (data.dashboard) updateDashboard(data.dashboard);
+    }
+  } catch (e) {
+    loadingEl.remove();
+    addMessage('Erreur lors de l\'analyse de la photo', 'system');
+  }
+
+  sendBtn.disabled = false;
+  inputEl.focus();
+}
 
 function renderMeals(meals) {
   const mealsEl = document.getElementById('mealsList');

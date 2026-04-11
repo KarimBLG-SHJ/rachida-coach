@@ -217,13 +217,14 @@ ${memory}
 // MEAL LOGGING
 // ─────────────────────────────────────────────
 
-export async function logMeal(description, mealType = 'lunch') {
+export async function logMeal(description, mealType = 'lunch', imageBase64 = null) {
   const targets = getTodayTargets();
   const consumed = getTodayConsumed();
   const remaining = getRemainingToday();
 
   const prompt = `
-Rachida vient de manger : "${description}"
+${imageBase64 ? 'Rachida a pris une photo de son repas. Identifie TOUS les aliments visibles sur la photo.' : `Rachida vient de manger : "${description}"`}
+${description && imageBase64 ? `Elle ajoute : "${description}"` : ''}
 
 Contexte de sa journée :
 - Objectif calories : ${targets.calories_target} kcal
@@ -299,11 +300,22 @@ Réponds UNIQUEMENT avec du JSON dans ce format exact :
 }
 `;
 
+  // Build message content — text only or image + text
+  const messageContent = [];
+  if (imageBase64) {
+    const mediaType = imageBase64.startsWith('/9j/') ? 'image/jpeg' : 'image/png';
+    messageContent.push({
+      type: 'image',
+      source: { type: 'base64', media_type: mediaType, data: imageBase64 }
+    });
+  }
+  messageContent.push({ type: 'text', text: prompt });
+
   const response = await getClient().messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 1000,
+    max_tokens: 1500,
     system: systemPrompt,
-    messages: [{ role: 'user', content: prompt }]
+    messages: [{ role: 'user', content: messageContent }]
   });
 
   const rawText = response.content[0].text.replace(/```json|```/g, '').trim();
@@ -312,6 +324,7 @@ Réponds UNIQUEMENT avec du JSON dans ce format exact :
   // Save to database
   const today = new Date().toISOString().split('T')[0];
   const time = new Date().toTimeString().split(' ')[0];
+  const mealDescription = imageBase64 ? (description || 'Photo de repas — ' + data.items.map(i => i.name).join(', ')) : description;
 
   const t = data.totals;
   db.prepare(`
@@ -319,7 +332,7 @@ Réponds UNIQUEMENT avec du JSON dans ce format exact :
       iron_mg, zinc_mg, calcium_mg, magnesium_mg, potassium_mg, vit_a_mcg, vit_c_mg, vit_d_ui, vit_b12_mcg, vit_b9_mcg, selenium_mcg)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
-    today, time, mealType, description,
+    today, time, mealType, mealDescription,
     t.calories, t.protein_g, t.fat_g, t.carbs_g, t.fiber_g || 0,
     data.items.every(i => i.is_halal) ? 1 : 0,
     t.iron_mg || 0, t.zinc_mg || 0, t.calcium_mg || 0, t.magnesium_mg || 0, t.potassium_mg || 0,
