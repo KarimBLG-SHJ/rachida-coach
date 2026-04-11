@@ -591,13 +591,13 @@
     <div class="msg system">Salut Rachida ! Dis-moi ce que tu as mangé, pose-moi une question, ou dis-moi tes médicaments — je suis là 😊</div>
   </div>
 
-  <div class="quick-actions">
-    <button class="quick-btn" onclick="sendQuick('brief du matin')">☀️ Brief du matin</button>
-    <button class="quick-btn" onclick="sendQuick('qu\'est-ce que je peux manger ce soir ?')">🍽️ Idée dîner</button>
-    <button class="quick-btn" onclick="sendQuick('combien de calories il me reste ?')">📊 Reste du jour</button>
+  <div class="quick-actions" style="overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none">
+    <button class="quick-btn" onclick="sendQuick('brief du matin')">☀️ Brief</button>
+    <button class="quick-btn" onclick="sendQuick('qu\'est-ce que je peux manger ce soir ?')">🍽️ Dîner</button>
+    <button class="quick-btn" onclick="sendQuick('combien de calories il me reste ?')">📊 Reste</button>
     <button class="quick-btn" onclick="sendQuick('un snack sain ?')">🥜 Snack</button>
     <button class="quick-btn" onclick="sendQuick('mes compléments ?')">💊 Compléments</button>
-    <button class="quick-btn" onclick="loadWeekly()">📈 Bilan semaine</button>
+    <button class="quick-btn" onclick="loadWeekly()">📈 Semaine</button>
   </div>
 
   <div class="chat-input">
@@ -837,9 +837,9 @@ function correctMeal(btn) {
   const card = btn.closest('.meal-card');
   const actions = card.querySelector('.meal-card-actions');
   actions.innerHTML = `
-    <input type="text" id="correctionInput" placeholder="Ex: c'est un curry de crevettes, 250g de riz"
-      style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:16px;font-size:0.8rem;outline:none">
-    <button class="btn-save" onclick="sendCorrection(this)">✅ Recalculer</button>
+    <input type="text" id="correctionInput" placeholder="Ex: c'est des œufs pochés, pas de la fêta"
+      style="width:100%;padding:12px;border:1px solid #ddd;border-radius:12px;font-size:0.85rem;outline:none;margin-bottom:8px">
+    <button class="btn-save" onclick="sendCorrection(this)" style="width:100%">✅ Recalculer</button>
   `;
   document.getElementById('correctionInput').focus();
   document.getElementById('correctionInput').addEventListener('keydown', (e) => {
@@ -853,23 +853,34 @@ async function sendCorrection(btn) {
   const correction = input.value.trim();
   if (!correction) return;
 
-  card.querySelector('.meal-card-actions').innerHTML = '<span style="color:#888;font-size:0.75rem">⏳ Recalcul en cours...</span>';
+  // Get the original items from the card
+  const originalItems = card.querySelector('.meal-card-items')?.textContent || '';
+  const originalTitle = card.querySelector('.meal-card-header')?.textContent || '';
+
+  card.querySelector('.meal-card-actions').innerHTML = '<div style="text-align:center;color:#888;font-size:0.8rem;padding:12px">⏳ Recalcul en cours...</div>';
 
   try {
+    // Delete the last meal from DB, then re-log with correction
+    await fetch('/api/meal/last', { method: 'DELETE' });
+
+    const hour = new Date().getHours();
+    const mealType = hour < 11 ? 'breakfast' : hour < 15 ? 'lunch' : hour < 18 ? 'snack' : 'dinner';
+
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: `Correction de mon dernier repas : ${correction}. Recalcule les calories et macros avec ces informations.` })
+      body: JSON.stringify({ message: `j'ai mangé : ${originalItems}. Correction : ${correction}. Recalcule avec cette correction.` })
     });
     const data = await res.json();
 
-    // Remove old card, add corrected response
     card.remove();
-    addMessage('✏️ Correction : ' + correction, 'user');
     addMessage(data.response, 'coach');
     if (data.dashboard) updateDashboard(data.dashboard);
   } catch(e) {
-    card.querySelector('.meal-card-actions').innerHTML = '<button class="btn-correct" onclick="correctMeal(this)">✏️ Corriger</button>';
+    card.querySelector('.meal-card-actions').innerHTML = `
+      <button class="btn-save-meal" onclick="this.textContent='✅ Enregistré !';this.disabled=true">Enregistrer ce repas</button>
+      <button class="btn-correct" onclick="correctMeal(this)">Corriger les résultats</button>
+    `;
   }
 }
 

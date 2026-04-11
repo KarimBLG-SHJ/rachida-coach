@@ -130,6 +130,16 @@ app.get('/api/meals', (req, res) => {
 });
 
 // ── API: Delete meal ────────────────────────
+app.delete('/api/meal/last', (req, res) => {
+  const last = db.prepare('SELECT id FROM meal_log ORDER BY id DESC LIMIT 1').get();
+  if (last) {
+    db.prepare('DELETE FROM meal_log WHERE id = ?').run(last.id);
+    res.json({ deleted: true, id: last.id });
+  } else {
+    res.json({ deleted: false });
+  }
+});
+
 app.delete('/api/meal/:id', (req, res) => {
   const result = db.prepare('DELETE FROM meal_log WHERE id = ?').run(req.params.id);
   res.json({ deleted: result.changes > 0, id: req.params.id });
