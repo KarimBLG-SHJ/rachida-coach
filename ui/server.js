@@ -212,7 +212,7 @@ app.post('/api/activity', (req, res) => {
 });
 
 // ── API: Withings OAuth ──────────────────────
-import { getAuthorizationURL, exchangeCode, syncWeight, getLatestWeight } from '../integrations/withings.js';
+import { getAuthorizationURL, exchangeCode, syncWeight, syncActivity, getLatestWeight } from '../integrations/withings.js';
 
 // Start OAuth flow — redirects to Withings
 app.get('/api/withings/connect', (req, res) => {
@@ -248,11 +248,12 @@ app.get('/api/withings/callback', async (req, res) => {
   }
 });
 
-// Manual sync trigger
+// Manual sync trigger — weight + activity
 app.get('/api/withings/sync', async (req, res) => {
   try {
-    const data = await syncWeight();
-    res.json({ synced: true, data });
+    const weight = await syncWeight();
+    const activity = await syncActivity(7);
+    res.json({ synced: true, weight, activity });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

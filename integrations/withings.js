@@ -89,23 +89,27 @@ async function getAccessToken() {
 
 /**
  * Fetch latest weight measurement from Withings
- * Returns: { weight_kg, fat_percent, muscle_percent, bone_mass_kg, date }
+ * Gets ALL body composition data from the scale:
+ * weight, fat%, fat mass, muscle%, bone mass, hydration%, BMI, visceral fat
  */
 export async function getLatestWeight() {
   try {
     const token = await getAccessToken();
 
+    // Type IDs: 1=weight, 5=fat_free_mass, 6=fat_ratio, 8=fat_mass_weight,
+    // 11=heart_rate, 76=muscle_mass, 77=hydration, 88=bone_mass,
+    // 91=pulse_wave_velocity, 122=visceral_fat
     const response = await axios.post(`${WITHINGS_API}/measure`, new URLSearchParams({
       action: 'getmeas',
-      meastype: '1,6,8,88', // weight, fat%, muscle%, bone mass
-      category: 1, // real measures only
-      lastupdate: Math.floor(Date.now() / 1000) - 86400 * 7 // last 7 days
+      meastype: '1,5,6,8,11,76,77,88,122',
+      category: 1,
+      lastupdate: Math.floor(Date.now() / 1000) - 86400 * 30 // last 30 days
     }), {
       headers: { Authorization: `Bearer ${token}` }
     });
 
     if (response.data.status !== 0) {
-      throw new Error(`Withings API error: ${response.data.error}`);
+      throw new Error(`Withings API error: ${JSON.stringify(response.data)}`);
     }
 
     const groups = response.data.body.measuregrps;
@@ -120,19 +124,92 @@ export async function getLatestWeight() {
     for (const m of latest.measures) {
       const value = m.value * Math.pow(10, m.unit);
       switch (m.type) {
-        case 1:  measures.weight_kg = Math.round(value * 10) / 10; break;
-        case 6:  measures.fat_percent = Math.round(value * 10) / 10; break;
-        case 8:  measures.muscle_percent = Math.round(value * 10) / 10; break;
-        case 88: measures.bone_mass_kg = Math.round(value * 100) / 100; break;
+        case 1:   measures.weight_kg = Math.round(value * 10) / 10; break;
+        case 5:   measures.fat_free_mass_kg = Math.round(value * 10) / 10; break;
+        case 6:   measures.fat_percent = Math.round(value * 10) / 10; break;
+        case 8:   measures.fat_mass_kg = Math.round(value * 10) / 10; break;
+        case 11:  measures.heart_rate = Math.round(value); break;
+        case 76:  measures.muscle_mass_kg = Math.round(value * 10) / 10; break;
+        case 77:  measures.hydration_percent = Math.round(value * 10) / 10; break;
+        case 88:  measures.bone_mass_kg = Math.round(value * 100) / 100; break;
+        case 122: measures.visceral_fat = Math.round(value); break;
       }
     }
 
+    console.log(`[Withings] Data: ${JSON.stringify(measures)}`);
     return { ...measures, date, time, source: 'withings' };
 
   } catch (error) {
     console.error('[Withings] Error:', error.message);
     return null;
   }
+}
+
+/**
+ * Fetch activity data (steps, calories, distance) from Withings
+ */
+export async function getActivity(days = 7) {
+  try {
+    const token = await getAccessToken();
+    const startdate = new Date(Date.now() - 86400000 * days).toISOString().split('T')[0];
+    const enddate = new Date().toISOString().split('T')[0];
+
+    const response = await axios.post(`${WITHINGS_API}/v2/measure`, new URLSearchParams({
+      action: 'getactivity',
+      startdateymd: startdate,
+      enddateymd: enddate
+    }), {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (response.data.status !== 0) {
+      return null;
+    }
+
+    const activities = response.data.body.activities || [];
+    return activities.map(a => ({
+      date: a.date,
+      steps: a.steps || 0,
+      distance_m: a.distance || 0,
+      active_calories: a.calories || 0,
+      total_calories: a.totalcalories || 0,
+      soft_activity_min: a.soft || 0,
+      moderate_activity_min: a.moderate || 0,
+      intense_activity_min: a.intense || 0
+    }));
+  } catch (error) {
+    console.error('[Withings Activity] Error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Sync activity data to database
+ */
+export async function syncActivity(days = 7) {
+  const activities = await getActivity(days);
+  if (!activities || activities.length === 0) return null;
+
+  let count = 0;
+  for (const a of activities) {
+    const existing = db.prepare(
+      "SELECT id FROM activity_log WHERE date = ? AND source = 'withings'"
+    ).get(a.date);
+
+    if (!existing) {
+      db.prepare(`
+        INSERT INTO activity_log (date, steps, active_calories, total_calories, exercise_minutes, distance_km, source)
+        VALUES (?, ?, ?, ?, ?, ?, 'withings')
+      `).run(a.date, a.steps, a.active_calories, a.total_calories,
+        a.moderate_activity_min + a.intense_activity_min,
+        Math.round(a.distance_m / 10) / 100, // meters to km
+      );
+      count++;
+    }
+  }
+
+  console.log(`[Withings] Synced ${count} activity days`);
+  return { synced: count, activities };
 }
 
 /**
@@ -151,11 +228,12 @@ export async function syncWeight() {
   if (existing) return null; // Already synced
 
   db.prepare(`
-    INSERT INTO weight_log (date, time, weight_kg, fat_percent, muscle_percent, bone_mass_kg, source)
-    VALUES (?, ?, ?, ?, ?, ?, 'withings')
-  `).run(data.date, data.time, data.weight_kg, data.fat_percent, data.muscle_percent, data.bone_mass_kg);
+    INSERT INTO weight_log (date, time, weight_kg, fat_percent, muscle_percent, bone_mass_kg, hydration_percent, source)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'withings')
+  `).run(data.date, data.time, data.weight_kg, data.fat_percent,
+    data.muscle_mass_kg, data.bone_mass_kg, data.hydration_percent);
 
-  console.log(`[Withings] Synced: ${data.weight_kg} kg on ${data.date}`);
+  console.log(`[Withings] Synced: ${data.weight_kg} kg | fat ${data.fat_percent}% | muscle ${data.muscle_mass_kg}kg | bone ${data.bone_mass_kg}kg | hydration ${data.hydration_percent}% | visceral fat ${data.visceral_fat} | HR ${data.heart_rate}`);
   return data;
 }
 
