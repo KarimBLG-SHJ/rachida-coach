@@ -55,7 +55,7 @@ async function main() {
     case 'web':
       initDatabase();
       calculateDailyTargets();
-      startWebUI(3000);
+      startWebUI();
       startSmartScheduler();
       break;
 
