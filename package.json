@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
+    "start": "node index.js web",
     "brief": "node index.js brief",
     "semaine": "node index.js semaine",
     "setup": "node index.js setup",

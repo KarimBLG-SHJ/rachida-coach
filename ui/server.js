@@ -133,8 +133,9 @@ function getDashboardData() {
 }
 
 // ── Start server ────────────────────────────
-export function startWebUI(port = 3000) {
-  app.listen(port, () => {
-    console.log(`🌐 Rachida Health Coach — http://localhost:${port}`);
+export function startWebUI(port) {
+  const p = port || process.env.PORT || 3000;
+  app.listen(p, '0.0.0.0', () => {
+    console.log(`🌐 Rachida Health Coach — http://localhost:${p}`);
   });
 }
