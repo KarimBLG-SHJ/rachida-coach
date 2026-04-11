@@ -175,6 +175,35 @@ app.get('/api/micros', (req, res) => {
     FROM meal_log WHERE date = ?
   `).get(date);
 
+  // Add nutrients from supplements taken today
+  const suppNutrients = {
+    fer:        { iron_mg: 14 },
+    moringa:    { iron_mg: 2, vit_a_mcg: 380, vit_c_mg: 17, calcium_mg: 185, potassium_mg: 337 },
+    vit_b12:    { vit_b12_mcg: 1000 },
+    vit_c:      { vit_c_mg: 1000 },
+    vit_d:      { vit_d_ui: 5000 },
+    omega3:     {},
+    magnesium:  { magnesium_mg: 200 },
+    chrome:     {},
+    astaxanthin:{},
+    berberine:  {},
+    glucomannan:{},
+    kafein:     {}
+  };
+
+  const takenSupps = db.prepare(
+    'SELECT supplement_id FROM supplement_log WHERE date = ? AND taken = 1'
+  ).all(date);
+
+  for (const s of takenSupps) {
+    const nutrients = suppNutrients[s.supplement_id];
+    if (nutrients) {
+      for (const [key, value] of Object.entries(nutrients)) {
+        if (row[key] !== undefined) row[key] += value;
+      }
+    }
+  }
+
   // RDA for women 45-55
   const rda = {
     iron_mg: { value: 18, unit: 'mg' },
