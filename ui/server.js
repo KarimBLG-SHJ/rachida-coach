@@ -4,6 +4,7 @@
 
 import '../env.js';
 import express from 'express';
+import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import Database from 'better-sqlite3';
@@ -59,6 +60,41 @@ app.post('/api/chat', async (req, res) => {
 // ── API: Get dashboard data ─────────────────
 app.get('/api/dashboard', (req, res) => {
   res.json(getDashboardData());
+});
+
+// ── API: Toggle supplement taken ─────────────
+app.post('/api/supplement/toggle', (req, res) => {
+  try {
+    const { supplement_id } = req.body;
+    if (!supplement_id) return res.status(400).json({ error: 'supplement_id required' });
+
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date().toTimeString().split(' ')[0];
+
+    // Check if already taken today
+    const existing = db.prepare(
+      'SELECT id, taken FROM supplement_log WHERE date = ? AND supplement_id = ? LIMIT 1'
+    ).get(today, supplement_id);
+
+    if (existing && existing.taken) {
+      // Untoggle
+      db.prepare('DELETE FROM supplement_log WHERE id = ?').run(existing.id);
+      res.json({ toggled: true, taken: false, supplement_id });
+    } else {
+      // Get supplement name
+      const supps = JSON.parse(readFileSync(join(__dirname, '../data/supplements.json'), 'utf-8'));
+      const supp = supps.find(s => s.id === supplement_id);
+      const name = supp?.name || supplement_id;
+
+      db.prepare(`
+        INSERT INTO supplement_log (date, supplement_id, supplement_name, scheduled_time, taken, taken_at)
+        VALUES (?, ?, ?, ?, 1, ?)
+      `).run(today, supplement_id, name, supp?.reminder_time || null, now);
+      res.json({ toggled: true, taken: true, taken_at: now, supplement_id });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── API: Morning brief ──────────────────────
@@ -117,6 +153,23 @@ function getDashboardData() {
 
   const meds = listMedications();
 
+  // Supplements with today's taken status
+  const supps = JSON.parse(readFileSync(join(__dirname, '../data/supplements.json'), 'utf-8'));
+  const takenToday = db.prepare(
+    'SELECT supplement_id, taken_at FROM supplement_log WHERE date = ? AND taken = 1'
+  ).all(today);
+  const takenMap = new Map(takenToday.map(r => [r.supplement_id, r.taken_at]));
+
+  const supplements = supps.map(s => ({
+    id: s.id,
+    name: s.name,
+    dose: s.dose,
+    timing: s.timing,
+    reminder_time: s.reminder_time,
+    taken: takenMap.has(s.id),
+    taken_at: takenMap.get(s.id) || null
+  }));
+
   return {
     date: today,
     targets,
@@ -125,6 +178,7 @@ function getDashboardData() {
     weight,
     weightHistory,
     medications: meds,
+    supplements,
     calPct: Math.min(Math.round((consumed.calories / targets.calories_target) * 100), 150),
     protPct: Math.min(Math.round((consumed.protein_g / targets.protein_target_g) * 100), 150),
     fatPct: Math.min(Math.round((consumed.fat_g / targets.fat_target_g) * 100), 150),

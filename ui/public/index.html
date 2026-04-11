@@ -114,6 +114,46 @@
     padding: 4px 0;
   }
 
+  .supp-group-title {
+    font-size: 0.7rem;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 8px;
+    margin-bottom: 4px;
+  }
+
+  .supp-group-title:first-child { margin-top: 0; }
+
+  .supp-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    cursor: pointer;
+    font-size: 0.8rem;
+    border-bottom: 1px solid #f5f5f5;
+    transition: opacity 0.2s;
+  }
+
+  .supp-check:last-child { border: none; }
+  .supp-check:hover { opacity: 0.7; }
+
+  .supp-check.taken { opacity: 0.5; text-decoration: line-through; }
+
+  .supp-check input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #4CAF50;
+    cursor: pointer;
+  }
+
+  .supp-time {
+    font-size: 0.65rem;
+    color: #bbb;
+    margin-left: auto;
+  }
+
   .empty { color: #bbb; font-style: italic; font-size: 0.8rem; }
 
   /* ── RIGHT: Chat ─────────────────── */
@@ -282,6 +322,11 @@
   </div>
 
   <div class="card">
+    <h2>💊 Compléments</h2>
+    <div id="suppsList"></div>
+  </div>
+
+  <div class="card">
     <h2>💊 Médicaments</h2>
     <div id="medsList"><span class="empty">Aucun médicament</span></div>
   </div>
@@ -361,6 +406,35 @@ function updateDashboard(d) {
     }).join('');
   }
 
+  // Supplements with checkboxes
+  const suppsEl = document.getElementById('suppsList');
+  if (d.supplements && d.supplements.length > 0) {
+    const groups = {
+      'morning_empty': '🌅 Matin (à jeun)',
+      'morning_with_food': '🌅 Matin (avec petit-déj)',
+      'lunch': '☀️ Midi (avec déjeuner)',
+      'before_dinner': '🌆 Avant dîner (30 min)',
+      'evening_before_sleep': '🌙 Soir (avant sommeil)'
+    };
+    let html = '';
+    for (const [timing, label] of Object.entries(groups)) {
+      const items = d.supplements.filter(s => s.timing === timing);
+      if (items.length === 0) continue;
+      html += `<div class="supp-group-title">${label}</div>`;
+      items.forEach(s => {
+        const checked = s.taken ? 'checked' : '';
+        const takenCls = s.taken ? ' taken' : '';
+        const timeStr = s.taken_at ? s.taken_at.substring(0,5) : s.reminder_time;
+        html += `<label class="supp-check${takenCls}">
+          <input type="checkbox" ${checked} onchange="toggleSupp('${s.id}', this)">
+          <span>${s.name} — ${s.dose}</span>
+          <span class="supp-time">${timeStr}</span>
+        </label>`;
+      });
+    }
+    suppsEl.innerHTML = html;
+  }
+
   // Medications
   const medsEl = document.getElementById('medsList');
   if (d.medications.length === 0) {
@@ -436,6 +510,28 @@ inputEl.addEventListener('keydown', (e) => {
     sendMessage();
   }
 });
+
+async function toggleSupp(id, checkbox) {
+  try {
+    const res = await fetch('/api/supplement/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ supplement_id: id })
+    });
+    const data = await res.json();
+    // Update the label style
+    const label = checkbox.closest('.supp-check');
+    if (data.taken) {
+      label.classList.add('taken');
+      const timeEl = label.querySelector('.supp-time');
+      if (timeEl && data.taken_at) timeEl.textContent = data.taken_at.substring(0,5);
+    } else {
+      label.classList.remove('taken');
+    }
+  } catch (e) {
+    checkbox.checked = !checkbox.checked; // revert on error
+  }
+}
 
 async function loadWeekly() {
   addMessage('Bilan de la semaine...', 'system');
