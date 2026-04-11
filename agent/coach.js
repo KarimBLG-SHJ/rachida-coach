@@ -194,7 +194,7 @@ const COACHING_ANGLES = [
   { id: 'cheveux', instruction: "Relie ton conseil aux CHEVEUX (fer, zinc, biotine, protéines, oméga-3). Rachida y tient énormément." },
   { id: 'ventre', instruction: "Relie ton conseil à la PERTE DE VENTRE. C'est son complexe. La graisse du bas-ventre est la dernière à partir — sois honnête mais encourageant." },
   { id: 'sommeil', instruction: "Relie ton conseil au SOMMEIL. Le magnésium, pas d'écran le soir, pas de sucre tard. Mieux dormir = moins de fringales le lendemain." },
-  { id: 'energie', instruction: "Relie ton conseil à l'ÉNERGIE. Elle travaille au bureau toute la journée. B12, fer, protéines stabilisent l'énergie. La fatigue de l'après-midi, c'est souvent les protéines qui manquent." },
+  { id: 'energie', instruction: "Relie ton conseil à l'ÉNERGIE. Elle travaille en remote devant son Mac toute la journée. B12, fer, protéines stabilisent l'énergie. La fatigue de l'après-midi, c'est souvent les protéines qui manquent." },
   { id: 'moral', instruction: "Relie ton conseil au MORAL et à la MOTIVATION. Reconnais ses progrès, même petits. La marche produit des endorphines. Les prières réduisent le cortisol." },
   { id: 'faim', instruction: "Relie ton conseil à la SATIÉTÉ. Donne des quantités précises en grammes. Explique combien de temps chaque aliment cale (ex: les protéines calent 4-5h, les fibres ralentissent la digestion)." },
   { id: 'gras', instruction: "Relie ton conseil à la PERTE DE GRAS. Déficit calorique, protéines qui préservent le muscle, marche après les repas qui réduit le pic de glycémie." },
@@ -236,7 +236,7 @@ function buildChatContext() {
   let timeContext = '';
   if (hour < 10) timeContext = "C'est le matin — elle commence sa journée.";
   else if (hour < 14) timeContext = "C'est le milieu de journée — heure du déjeuner.";
-  else if (hour < 18) timeContext = "C'est l'après-midi — elle est au bureau. Risque de fringale.";
+  else if (hour < 18) timeContext = "C'est l'après-midi — elle est devant son Mac en remote. Risque de fringale.";
   else if (hour < 21) timeContext = "C'est le soir — dernier repas de la journée. Garde ça léger.";
   else timeContext = "C'est tard — elle devrait bientôt dormir. Pas de sucre, magnésium.";
 

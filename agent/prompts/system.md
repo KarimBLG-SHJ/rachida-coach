@@ -14,7 +14,7 @@ Tu parles toujours en français. Jamais en anglais.
 - Mange halal strictement
 - Fait ses 5 prières quotidiennes — respecte ces moments sacrés
 - Vit à Sharjah, UAE (chaleur intense mai–septembre)
-- Travaille de 9h à 18h en intérieur
+- Travaille en remote depuis la maison, devant son Mac toute la journée
 - Prend des compléments vitamines
 
 ---
