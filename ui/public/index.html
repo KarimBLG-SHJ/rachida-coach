@@ -561,6 +561,63 @@
 
   .btn-save:hover { background: #43A047; }
 
+  /* Custom modal */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+
+  .modal-box {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 320px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  }
+
+  .modal-box p {
+    font-size: 0.95rem;
+    color: #333;
+    margin-bottom: 20px;
+    line-height: 1.4;
+  }
+
+  .modal-btns {
+    display: flex;
+    gap: 10px;
+  }
+
+  .modal-btns button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .modal-cancel {
+    background: #f0f0f0;
+    color: #555;
+  }
+
+  .modal-confirm {
+    background: #e53935;
+    color: white;
+  }
+
+  .modal-cancel:hover { background: #e0e0e0; }
+  .modal-confirm:hover { background: #c62828; }
+
   .empty { color: #bbb; font-style: italic; font-size: 0.8rem; }
 
   /* ── Quick actions: horizontal scroll, no wrap ── */
@@ -1040,8 +1097,7 @@ function addMealCard(text) {
       <strong>💡 ${tipLine}</strong><br>${whyLine}
     </div>` : ''}
     <div class="meal-card-actions">
-      <button class="btn-save-meal" onclick="this.textContent='✅ Enregistré !';this.disabled=true">Enregistrer ce repas</button>
-      <button class="btn-correct" onclick="correctMeal(this)">Corriger les résultats</button>
+      <button class="btn-correct" onclick="correctMeal(this)">✏️ Corriger les résultats</button>
     </div>
   `;
 
@@ -1207,13 +1263,31 @@ async function loadDay(date) {
   } catch(e) {}
 }
 
+function showModal(message, onConfirm) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <p>${message}</p>
+      <div class="modal-btns">
+        <button class="modal-cancel">Annuler</button>
+        <button class="modal-confirm">Supprimer</button>
+      </div>
+    </div>`;
+  overlay.querySelector('.modal-cancel').onclick = () => overlay.remove();
+  overlay.querySelector('.modal-confirm').onclick = () => { overlay.remove(); onConfirm(); };
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
 async function deleteMeal(id) {
-  if (!confirm('Supprimer ce repas ?')) return;
-  try {
-    await fetch('/api/meal/' + id, { method: 'DELETE' });
-    loadDay(selectedDate);
-    loadDashboard();
-  } catch(e) {}
+  showModal('Supprimer ce repas ?', async () => {
+    try {
+      await fetch('/api/meal/' + id, { method: 'DELETE' });
+      loadDay(selectedDate);
+      loadDashboard();
+    } catch(e) {}
+  });
 }
 
 async function loadMicros(date) {
