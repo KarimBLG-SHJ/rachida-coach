@@ -306,8 +306,8 @@ function getDashboardData() {
   ).all(today);
 
   const weight = db.prepare(
-    'SELECT weight_kg, fat_percent FROM weight_log WHERE date = ? ORDER BY id DESC LIMIT 1'
-  ).get(today);
+    'SELECT weight_kg, fat_percent, muscle_percent, bone_mass_kg, hydration_percent FROM weight_log ORDER BY date DESC, id DESC LIMIT 1'
+  ).get();
 
   const weightHistory = db.prepare(
     "SELECT date, weight_kg FROM weight_log WHERE date >= date('now', '-14 days') ORDER BY date ASC"
@@ -332,6 +332,16 @@ function getDashboardData() {
     taken_at: takenMap.get(s.id) || null
   }));
 
+  // Activity data (Withings / Apple Watch)
+  const todayActivity = db.prepare(
+    'SELECT steps, active_calories, exercise_minutes, distance_km FROM activity_log WHERE date = ? LIMIT 1'
+  ).get(today);
+
+  const weekActivity = db.prepare(`
+    SELECT date, steps, active_calories FROM activity_log
+    WHERE date >= date('now', '-7 days') ORDER BY date ASC
+  `).all();
+
   return {
     date: today,
     targets,
@@ -341,6 +351,8 @@ function getDashboardData() {
     weightHistory,
     medications: meds,
     supplements,
+    activity: todayActivity,
+    weekActivity,
     calPct: Math.min(Math.round((consumed.calories / targets.calories_target) * 100), 150),
     protPct: Math.min(Math.round((consumed.protein_g / targets.protein_target_g) * 100), 150),
     fatPct: Math.min(Math.round((consumed.fat_g / targets.fat_target_g) * 100), 150),

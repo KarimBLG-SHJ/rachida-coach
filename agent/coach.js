@@ -254,6 +254,45 @@ function buildChatContext() {
   else if (protPct < 60) proteinStatus = "Ses protéines sont en retard. Propose des aliments riches en protéines.";
   else if (protPct >= 80) proteinStatus = "✅ Ses protéines sont bonnes pour aujourd'hui.";
 
+  // Weight & body composition (Withings)
+  const latestWeight = db.prepare(
+    'SELECT weight_kg, fat_percent, muscle_percent, bone_mass_kg, hydration_percent, date FROM weight_log ORDER BY date DESC LIMIT 1'
+  ).get();
+
+  const weightTrend = db.prepare(
+    'SELECT date, weight_kg FROM weight_log ORDER BY date DESC LIMIT 7'
+  ).all();
+
+  let weightContext = 'Pas de données de poids récentes.';
+  if (latestWeight) {
+    weightContext = `Dernier poids : ${latestWeight.weight_kg} kg (${latestWeight.date})`;
+    if (latestWeight.fat_percent) weightContext += ` | Graisse : ${latestWeight.fat_percent}%`;
+    if (latestWeight.muscle_percent) weightContext += ` | Muscle : ${latestWeight.muscle_percent} kg`;
+    if (latestWeight.hydration_percent) weightContext += ` | Hydratation : ${latestWeight.hydration_percent}%`;
+    if (weightTrend.length >= 2) {
+      const diff = latestWeight.weight_kg - weightTrend[weightTrend.length - 1].weight_kg;
+      weightContext += ` | Tendance 7j : ${diff > 0 ? '+' : ''}${diff.toFixed(1)} kg`;
+    }
+  }
+
+  // Activity (Withings / Apple Watch)
+  const todayActivity = db.prepare(
+    'SELECT steps, active_calories, exercise_minutes, distance_km FROM activity_log WHERE date = ? LIMIT 1'
+  ).get(new Date().toISOString().split('T')[0]);
+
+  const weekActivity = db.prepare(
+    'SELECT ROUND(AVG(steps)) as avg_steps, ROUND(AVG(active_calories)) as avg_cal, COUNT(*) as days FROM activity_log WHERE date >= date("now", "-7 days")'
+  ).get();
+
+  let activityContext = 'Pas de données d\'activité aujourd\'hui.';
+  if (todayActivity) {
+    activityContext = `Aujourd'hui : ${todayActivity.steps} pas | ${todayActivity.active_calories} kcal brûlées | ${todayActivity.exercise_minutes || 0} min exercice`;
+    if (todayActivity.distance_km) activityContext += ` | ${todayActivity.distance_km} km`;
+  }
+  if (weekActivity && weekActivity.days > 0) {
+    activityContext += `\nMoyenne 7 jours : ${weekActivity.avg_steps} pas/jour | ${weekActivity.avg_cal} kcal/jour (${weekActivity.days} jours trackés)`;
+  }
+
   return `
 CONTEXTE DU JOUR (${today}) :
 ${timeContext}
@@ -265,6 +304,12 @@ Protéines : ${consumed.protein_g}/${targets.protein_target_g}g (${protPct}%)
 Lipides : ${consumed.fat_g}/${targets.fat_target_g}g
 Glucides : ${consumed.carbs_g}/${targets.carbs_target_g}g
 
+⚖️ POIDS & CORPS :
+${weightContext}
+
+🚶‍♀️ ACTIVITÉ :
+${activityContext}
+
 REPAS AUJOURD'HUI :
 ${mealsContext}
 
@@ -275,7 +320,8 @@ MÉMOIRE : ${memory}
 
 🎯 ANGLE DE CETTE RÉPONSE (OBLIGATOIRE) :
 ${angle.instruction}
-NE RÉPÈTE PAS ce que tu as dit dans les messages précédents. Varie tes exemples, tes formulations, tes suggestions d'aliments. Sois créatif. Si tu as déjà parlé de poulet, propose du poisson. Si tu as déjà mentionné les cheveux, parle de l'énergie ou du sommeil.
+UTILISE les données d'activité et de poids ci-dessus pour personnaliser ta réponse. Si elle a fait 14000 pas, félicite-la. Si elle a fait 3000 pas, encourage-la à bouger. Si son % de graisse a baissé, dis-le. Si son hydratation est basse, rappelle-lui de boire.
+NE RÉPÈTE PAS ce que tu as dit dans les messages précédents. Varie tes exemples, tes formulations, tes suggestions.
 `.trim();
 }
 
