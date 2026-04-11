@@ -7,16 +7,10 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { createInterface } from 'readline';
 import chalk from 'chalk';
+import db from './db/connection.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-function initDatabase() {
-  const db = new Database(join(__dirname, 'db', 'health.db'));
-  const schema = readFileSync(join(__dirname, 'db', 'schema.sql'), 'utf-8');
-  db.exec(schema);
-  db.close();
-  console.log('✅ Database initialized');
-}
 import { startSmartScheduler } from './reminders/smart-schedule.js';
 import { logMeal, generateMorningBrief, chat } from './agent/coach.js';
 import { calculateDailyTargets, getTodayConsumed, getTodayTargets } from './agent/macros.js';
@@ -27,9 +21,6 @@ import { whatIsMissing, getDaySummaryContext } from './reminders/smart-schedule.
 import { listMedications, formatMedicationSchedule } from './commands/medications.js';
 import { generateDailyReport } from './ui/daily-report.js';
 import { startWebUI } from './ui/server.js';
-import Database from 'better-sqlite3';
-
-// Also init DB in setup and daemon
 
 
 const args = process.argv.slice(2);
@@ -53,14 +44,12 @@ async function main() {
       break;
 
     case 'web':
-      initDatabase();
       calculateDailyTargets();
       startWebUI();
       startSmartScheduler();
       break;
 
     case 'daemon':
-      initDatabase();
       console.log(chalk.green('🧠 Smart reminders running — Dubai timezone'));
       calculateDailyTargets();
       startSmartScheduler();
@@ -250,8 +239,6 @@ function showDaySummary() {
 // ── WEEKLY REVIEW ─────────────────────────────
 
 async function showWeeklyReview() {
-  const db = new Database('./db/health.db');
-
   const meals = db.prepare(`
     SELECT date,
       COALESCE(SUM(calories),0) as cal,
@@ -350,12 +337,7 @@ async function runSetup() {
   }
 
   try {
-    const { readFileSync } = await import('fs');
-    const schema = readFileSync('./db/schema.sql', 'utf-8');
-    const Database = (await import('better-sqlite3')).default;
-    const db = new Database('./db/health.db');
-    db.exec(schema);
-    console.log(chalk.green('✅ Base de données initialisée'));
+    console.log(chalk.green('✅ Base de données initialisée (via db/connection.js)'));
   } catch (e) {
     console.error(chalk.red('❌ DB :', e.message));
   }

@@ -4,9 +4,7 @@
 import cron from 'node-cron';
 import { notify } from './notifications.js';
 import { isNearPrayer } from '../integrations/prayer-times.js';
-import Database from 'better-sqlite3';
-
-const db = new Database('./db/health.db');
+import db from '../db/connection.js';
 
 export function startMeasurementReminders() {
 

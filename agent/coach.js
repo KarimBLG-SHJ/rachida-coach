@@ -6,7 +6,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import Database from 'better-sqlite3';
+import db from '../db/connection.js';
 import { getTodayTargets, getTodayConsumed, getRemainingToday } from './macros.js';
 import { getPrayerTimes, getBestWalkWindow, formatPrayerSchedule } from '../integrations/prayer-times.js';
 import { buildCoachContext, updatePreference, updateGoal, rememberInfo, recordFoodPreference } from './memory.js';
@@ -17,7 +17,6 @@ import { getWeatherSummary } from '../integrations/weather.js';
 import { getDailyFact as getMotivationFact, getMicroObjective as getMotivationObjective } from './motivation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const db = new Database('./db/health.db');
 
 // Lazy-init Anthropic client
 let _anthropic;
@@ -253,15 +252,41 @@ Réponds UNIQUEMENT avec du JSON dans ce format exact :
       "protein_g": 46,
       "fat_g": 6,
       "carbs_g": 0,
+      "fiber_g": 2,
       "is_halal": true,
-      "halal_note": null
+      "halal_note": null,
+      "micros": {
+        "iron_mg": 1.2,
+        "zinc_mg": 0.8,
+        "calcium_mg": 15,
+        "magnesium_mg": 12,
+        "potassium_mg": 200,
+        "vit_a_mcg": 0,
+        "vit_c_mg": 0,
+        "vit_d_ui": 0,
+        "vit_b12_mcg": 0.5,
+        "vit_b9_mcg": 10,
+        "selenium_mcg": 15
+      }
     }
   ],
   "totals": {
     "calories": 523,
     "protein_g": 52,
     "fat_g": 6,
-    "carbs_g": 60
+    "carbs_g": 60,
+    "fiber_g": 5,
+    "iron_mg": 2.5,
+    "zinc_mg": 1.5,
+    "calcium_mg": 50,
+    "magnesium_mg": 30,
+    "potassium_mg": 400,
+    "vit_a_mcg": 100,
+    "vit_c_mg": 15,
+    "vit_d_ui": 0,
+    "vit_b12_mcg": 1.0,
+    "vit_b9_mcg": 25,
+    "selenium_mcg": 20
   },
   "day_remaining": {
     "calories": ${remaining.calories},
@@ -288,13 +313,17 @@ Réponds UNIQUEMENT avec du JSON dans ce format exact :
   const today = new Date().toISOString().split('T')[0];
   const time = new Date().toTimeString().split(' ')[0];
 
+  const t = data.totals;
   db.prepare(`
-    INSERT INTO meal_log (date, time, meal_type, description, calories, protein_g, fat_g, carbs_g, is_halal)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO meal_log (date, time, meal_type, description, calories, protein_g, fat_g, carbs_g, fiber_g, is_halal,
+      iron_mg, zinc_mg, calcium_mg, magnesium_mg, potassium_mg, vit_a_mcg, vit_c_mg, vit_d_ui, vit_b12_mcg, vit_b9_mcg, selenium_mcg)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     today, time, mealType, description,
-    data.totals.calories, data.totals.protein_g, data.totals.fat_g, data.totals.carbs_g,
-    data.items.every(i => i.is_halal) ? 1 : 0
+    t.calories, t.protein_g, t.fat_g, t.carbs_g, t.fiber_g || 0,
+    data.items.every(i => i.is_halal) ? 1 : 0,
+    t.iron_mg || 0, t.zinc_mg || 0, t.calcium_mg || 0, t.magnesium_mg || 0, t.potassium_mg || 0,
+    t.vit_a_mcg || 0, t.vit_c_mg || 0, t.vit_d_ui || 0, t.vit_b12_mcg || 0, t.vit_b9_mcg || 0, t.selenium_mcg || 0
   );
 
   // Record food preferences in memory

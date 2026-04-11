@@ -12,11 +12,10 @@ import axios from 'axios';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import Database from 'better-sqlite3';
+import db from '../db/connection.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TOKEN_FILE = join(__dirname, '../data/.withings-tokens.json');
-const db = new Database('./db/health.db');
 
 const WITHINGS_API = 'https://wbsapi.withings.net';
 const WITHINGS_AUTH = 'https://account.withings.com/oauth2_user/authorize2';

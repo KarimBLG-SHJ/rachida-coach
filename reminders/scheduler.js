@@ -8,9 +8,7 @@ import cron from 'node-cron';
 import { notify, notifyUrgent } from './notifications.js';
 import { getPrayerTimes, isNearPrayer } from '../integrations/prayer-times.js';
 import { calculateDailyTargets, getTodayConsumed, getTodayTargets } from '../agent/macros.js';
-import Database from 'better-sqlite3';
-
-const db = new Database('./db/health.db');
+import db from '../db/connection.js';
 let sedentaryAlertsToday = 0;
 let lastSedentaryDate = '';
 

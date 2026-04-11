@@ -1,15 +1,13 @@
 // macros.js — Calculates Rachida's daily macro targets
 // Recalculates every morning using her latest weight
 
-import Database from 'better-sqlite3';
+import db from '../db/connection.js';
 import { readFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const profile = JSON.parse(readFileSync(join(__dirname, '../data/profile.json'), 'utf-8'));
-
-const db = new Database('./db/health.db');
 
 /**
  * Get Rachida's most recent weight

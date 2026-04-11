@@ -15,11 +15,10 @@
 import { readFileSync, existsSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import Database from 'better-sqlite3';
+import db from '../db/connection.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HEALTH_DIR = join(__dirname, '../data/apple-health');
-const db = new Database('./db/health.db');
 
 // ─────────────────────────────────────────────
 // XML PARSER (lightweight — no dependency needed)

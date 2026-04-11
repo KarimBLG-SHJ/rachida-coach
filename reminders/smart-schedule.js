@@ -4,7 +4,7 @@
 // Before every reminder, check what data exists.
 // Only interrupt her if something is actually missing and actually matters today.
 
-import Database from 'better-sqlite3';
+import db from '../db/connection.js';
 import cron from 'node-cron';
 import chalk from 'chalk';
 import { notify } from './notifications.js';
@@ -12,8 +12,6 @@ import { isNearPrayer } from '../integrations/prayer-times.js';
 import { listMedications } from '../commands/medications.js';
 import { syncWeight, isConfigured as isWithingsConfigured } from '../integrations/withings.js';
 import { autoImportCSV as autoImportAppleHealth } from '../integrations/apple-health.js';
-
-const db = new Database('./db/health.db');
 
 // ─────────────────────────────────────────────
 // DATA FRESHNESS CHECK

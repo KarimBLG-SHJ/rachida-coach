@@ -4,9 +4,7 @@
 // Rule: Never ask for something that isn't due yet.
 // Rule: One ask at a time. Never stack requests.
 
-import Database from 'better-sqlite3';
-
-const db = new Database('./db/health.db');
+import db from '../db/connection.js';
 
 // ─────────────────────────────────────────────
 // WHAT IS DUE TODAY?

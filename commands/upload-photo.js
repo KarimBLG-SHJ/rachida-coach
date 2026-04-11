@@ -6,11 +6,10 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { readFileSync, existsSync, mkdirSync, copyFileSync, writeFileSync } from 'fs';
 import { basename, extname, join } from 'path';
-import Database from 'better-sqlite3';
+import db from '../db/connection.js';
 import chalk from 'chalk';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const db = new Database('./db/health.db');
 
 // Storage folders
 const PHOTOS_DIR = './data/photos';

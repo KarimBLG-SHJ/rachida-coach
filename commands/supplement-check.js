@@ -1,13 +1,12 @@
 // supplement-check.js — Supplement tracking and verification
 // Checks timing, interactions, and blood work correlation
 
-import Database from 'better-sqlite3';
+import db from '../db/connection.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const db = new Database('./db/health.db');
 
 const supplements = JSON.parse(
   readFileSync(join(__dirname, '../data/supplements.json'), 'utf-8')

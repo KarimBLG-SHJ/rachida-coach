@@ -5,12 +5,11 @@ import { readFileSync } from 'fs';
 import { writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import Database from 'better-sqlite3';
+import db from '../db/connection.js';
 import { getTodayTargets, getTodayConsumed } from '../agent/macros.js';
 import { listMedications } from '../commands/medications.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const db = new Database('./db/health.db');
 
 export function generateDailyReport() {
   const today = new Date().toISOString().split('T')[0];

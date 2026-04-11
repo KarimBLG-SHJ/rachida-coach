@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS meal_log (
   date TEXT NOT NULL, time TEXT NOT NULL, meal_type TEXT NOT NULL,
   description TEXT NOT NULL, calories REAL, protein_g REAL, fat_g REAL,
   carbs_g REAL, fiber_g REAL, is_halal INTEGER DEFAULT 1, halal_flag TEXT,
+  iron_mg REAL, zinc_mg REAL, calcium_mg REAL, magnesium_mg REAL, potassium_mg REAL,
+  vit_a_mcg REAL, vit_c_mg REAL, vit_d_ui REAL, vit_b12_mcg REAL, vit_b9_mcg REAL, selenium_mcg REAL,
   created_at TEXT DEFAULT (datetime('now'))
 );
 

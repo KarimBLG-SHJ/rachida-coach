@@ -2,9 +2,7 @@
 // The coach NEVER recommends or changes doses.
 // It only records what Rachida tells it and reminds her.
 
-import Database from 'better-sqlite3';
-
-const db = new Database('./db/health.db');
+import db from '../db/connection.js';
 
 /**
  * Add a new medication

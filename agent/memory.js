@@ -2,9 +2,7 @@
 // Stores preferences, patterns, what works, what doesn't
 // All stored in SQLite coach_memory table
 
-import Database from 'better-sqlite3';
-
-const db = new Database('./db/health.db');
+import db from '../db/connection.js';
 
 /**
  * Get a memory value by key

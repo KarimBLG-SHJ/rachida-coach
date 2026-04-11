@@ -7,7 +7,7 @@ import express from 'express';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import Database from 'better-sqlite3';
+import db from '../db/connection.js';
 import { logMeal, generateMorningBrief, chat } from '../agent/coach.js';
 import { getTodayTargets, getTodayConsumed } from '../agent/macros.js';
 import { listMedications, addMedication, formatMedicationSchedule } from '../commands/medications.js';
@@ -16,7 +16,6 @@ import { buildCoachContext } from '../agent/memory.js';
 import { getDaySummaryContext } from '../reminders/smart-schedule.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const db = new Database('./db/health.db');
 
 const app = express();
 app.use(express.json());
@@ -95,6 +94,69 @@ app.post('/api/supplement/toggle', (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ── API: Meal history ───────────────────────
+app.get('/api/meals', (req, res) => {
+  const date = req.query.date || new Date().toISOString().split('T')[0];
+  const meals = db.prepare(
+    'SELECT * FROM meal_log WHERE date = ? ORDER BY time ASC'
+  ).all(date);
+  res.json({ date, meals });
+});
+
+// ── API: Delete meal ────────────────────────
+app.delete('/api/meal/:id', (req, res) => {
+  const result = db.prepare('DELETE FROM meal_log WHERE id = ?').run(req.params.id);
+  res.json({ deleted: result.changes > 0, id: req.params.id });
+});
+
+// ── API: Get days with meals (for calendar) ─
+app.get('/api/meal-days', (req, res) => {
+  const days = db.prepare(`
+    SELECT date, COUNT(*) as count, ROUND(SUM(calories)) as total_cal
+    FROM meal_log
+    WHERE date >= date('now', '-30 days')
+    GROUP BY date ORDER BY date DESC
+  `).all();
+  res.json({ days });
+});
+
+// ── API: Today's micronutrients ─────────────
+app.get('/api/micros', (req, res) => {
+  const date = req.query.date || new Date().toISOString().split('T')[0];
+  const row = db.prepare(`
+    SELECT
+      COALESCE(SUM(iron_mg), 0) as iron_mg,
+      COALESCE(SUM(zinc_mg), 0) as zinc_mg,
+      COALESCE(SUM(calcium_mg), 0) as calcium_mg,
+      COALESCE(SUM(magnesium_mg), 0) as magnesium_mg,
+      COALESCE(SUM(potassium_mg), 0) as potassium_mg,
+      COALESCE(SUM(vit_a_mcg), 0) as vit_a_mcg,
+      COALESCE(SUM(vit_c_mg), 0) as vit_c_mg,
+      COALESCE(SUM(vit_d_ui), 0) as vit_d_ui,
+      COALESCE(SUM(vit_b12_mcg), 0) as vit_b12_mcg,
+      COALESCE(SUM(vit_b9_mcg), 0) as vit_b9_mcg,
+      COALESCE(SUM(selenium_mcg), 0) as selenium_mcg
+    FROM meal_log WHERE date = ?
+  `).get(date);
+
+  // RDA for women 45-55
+  const rda = {
+    iron_mg: { value: 18, unit: 'mg' },
+    zinc_mg: { value: 8, unit: 'mg' },
+    calcium_mg: { value: 1000, unit: 'mg' },
+    magnesium_mg: { value: 320, unit: 'mg' },
+    potassium_mg: { value: 2600, unit: 'mg' },
+    vit_a_mcg: { value: 700, unit: 'mcg' },
+    vit_c_mg: { value: 75, unit: 'mg' },
+    vit_d_ui: { value: 600, unit: 'UI' },
+    vit_b12_mcg: { value: 2.4, unit: 'mcg' },
+    vit_b9_mcg: { value: 400, unit: 'mcg' },
+    selenium_mcg: { value: 55, unit: 'mcg' }
+  };
+
+  res.json({ date, consumed: row, rda });
 });
 
 // ── API: Morning brief ──────────────────────
