@@ -187,29 +187,95 @@ function executeTool(toolName, input) {
 // BUILD RICH CONTEXT for every chat message
 // ─────────────────────────────────────────────
 
+// Track last angles used to avoid repetition
+const usedAngles = [];
+
+const COACHING_ANGLES = [
+  { id: 'cheveux', instruction: "Relie ton conseil aux CHEVEUX (fer, zinc, biotine, protéines, oméga-3). Rachida y tient énormément." },
+  { id: 'ventre', instruction: "Relie ton conseil à la PERTE DE VENTRE. C'est son complexe. La graisse du bas-ventre est la dernière à partir — sois honnête mais encourageant." },
+  { id: 'sommeil', instruction: "Relie ton conseil au SOMMEIL. Le magnésium, pas d'écran le soir, pas de sucre tard. Mieux dormir = moins de fringales le lendemain." },
+  { id: 'energie', instruction: "Relie ton conseil à l'ÉNERGIE. Elle travaille au bureau toute la journée. B12, fer, protéines stabilisent l'énergie. La fatigue de l'après-midi, c'est souvent les protéines qui manquent." },
+  { id: 'moral', instruction: "Relie ton conseil au MORAL et à la MOTIVATION. Reconnais ses progrès, même petits. La marche produit des endorphines. Les prières réduisent le cortisol." },
+  { id: 'faim', instruction: "Relie ton conseil à la SATIÉTÉ. Donne des quantités précises en grammes. Explique combien de temps chaque aliment cale (ex: les protéines calent 4-5h, les fibres ralentissent la digestion)." },
+  { id: 'gras', instruction: "Relie ton conseil à la PERTE DE GRAS. Déficit calorique, protéines qui préservent le muscle, marche après les repas qui réduit le pic de glycémie." },
+  { id: 'peau', instruction: "Relie ton conseil à la PEAU et au BIEN-ÊTRE. L'hydratation, les antioxydants (astaxanthin), les oméga-3, la vitamine C. La chaleur de Sharjah déshydrate la peau." }
+];
+
+function getAngleForNow() {
+  // Pick an angle that hasn't been used in the last 3 messages
+  const available = COACHING_ANGLES.filter(a => !usedAngles.includes(a.id));
+  const pool = available.length > 0 ? available : COACHING_ANGLES;
+  const picked = pool[Math.floor(Math.random() * pool.length)];
+
+  usedAngles.push(picked.id);
+  if (usedAngles.length > 3) usedAngles.shift();
+
+  return picked;
+}
+
 function buildChatContext() {
   const targets = getTodayTargets();
   const consumed = getTodayConsumed();
+  const remaining = getRemainingToday();
   const memory = buildCoachContext();
   const meds = getMedicationContext();
   const supplements = formatSupplements();
   const today = new Date().toLocaleDateString('fr-FR');
+  const hour = new Date().getHours();
+  const angle = getAngleForNow();
+
+  // Recent meals for context
+  const recentMeals = db.prepare(
+    "SELECT description, meal_type FROM meal_log WHERE date = ? ORDER BY time DESC LIMIT 3"
+  ).all(new Date().toISOString().split('T')[0]);
+  const mealsContext = recentMeals.length > 0
+    ? recentMeals.map(m => `- ${m.meal_type}: ${m.description}`).join('\n')
+    : 'Aucun repas enregistré aujourd\'hui';
+
+  // Time-aware context
+  let timeContext = '';
+  if (hour < 10) timeContext = "C'est le matin — elle commence sa journée.";
+  else if (hour < 14) timeContext = "C'est le milieu de journée — heure du déjeuner.";
+  else if (hour < 18) timeContext = "C'est l'après-midi — elle est au bureau. Risque de fringale.";
+  else if (hour < 21) timeContext = "C'est le soir — dernier repas de la journée. Garde ça léger.";
+  else timeContext = "C'est tard — elle devrait bientôt dormir. Pas de sucre, magnésium.";
+
+  // Calorie status
+  let calorieStatus = '';
+  if (consumed.calories === 0) calorieStatus = "Elle n'a encore rien mangé aujourd'hui.";
+  else if (remaining.calories > 500) calorieStatus = `Il lui reste ${remaining.calories} kcal — elle a de la marge.`;
+  else if (remaining.calories > 0) calorieStatus = `Il lui reste seulement ${remaining.calories} kcal — prochain repas léger.`;
+  else calorieStatus = `Elle a dépassé son objectif de ${Math.abs(remaining.calories)} kcal — pas grave, on ajuste.`;
+
+  // Protein status
+  let proteinStatus = '';
+  const protPct = Math.round((consumed.protein_g / targets.protein_target_g) * 100);
+  if (protPct < 30) proteinStatus = "⚠️ Ses protéines sont TRÈS basses. C'est pour ça qu'elle a faim. Priorité : protéines au prochain repas.";
+  else if (protPct < 60) proteinStatus = "Ses protéines sont en retard. Propose des aliments riches en protéines.";
+  else if (protPct >= 80) proteinStatus = "✅ Ses protéines sont bonnes pour aujourd'hui.";
 
   return `
 CONTEXTE DU JOUR (${today}) :
-- Calories : ${consumed.calories}/${targets.calories_target} kcal
-- Protéines : ${consumed.protein_g}/${targets.protein_target_g}g
-- Lipides : ${consumed.fat_g}/${targets.fat_target_g}g
-- Glucides : ${consumed.carbs_g}/${targets.carbs_target_g}g
+${timeContext}
+${calorieStatus}
+${proteinStatus}
 
-MÉDICAMENTS DE RACHIDA :
-${meds}
+Calories : ${consumed.calories}/${targets.calories_target} kcal (reste ${remaining.calories})
+Protéines : ${consumed.protein_g}/${targets.protein_target_g}g (${protPct}%)
+Lipides : ${consumed.fat_g}/${targets.fat_target_g}g
+Glucides : ${consumed.carbs_g}/${targets.carbs_target_g}g
 
-COMPLÉMENTS :
-${supplements}
+REPAS AUJOURD'HUI :
+${mealsContext}
 
-MÉMOIRE (ce que je sais sur Rachida) :
-${memory}
+MÉDICAMENTS : ${meds}
+COMPLÉMENTS : ${supplements}
+
+MÉMOIRE : ${memory}
+
+🎯 ANGLE DE CETTE RÉPONSE (OBLIGATOIRE) :
+${angle.instruction}
+NE RÉPÈTE PAS ce que tu as dit dans les messages précédents. Varie tes exemples, tes formulations, tes suggestions d'aliments. Sois créatif. Si tu as déjà parlé de poulet, propose du poisson. Si tu as déjà mentionné les cheveux, parle de l'énergie ou du sommeil.
 `.trim();
 }
 
