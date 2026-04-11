@@ -193,6 +193,24 @@ app.get('/api/micros', (req, res) => {
   res.json({ date, consumed: row, rda });
 });
 
+// ── API: Receive Apple Health data (from iOS Shortcut) ──
+app.post('/api/activity', (req, res) => {
+  try {
+    const { steps, active_calories, exercise_minutes, resting_heart_rate, date } = req.body;
+    const today = date || new Date().toISOString().split('T')[0];
+
+    db.prepare(`
+      INSERT OR REPLACE INTO activity_log (date, steps, active_calories, exercise_minutes, resting_heart_rate, source)
+      VALUES (?, ?, ?, ?, ?, 'apple_watch_shortcut')
+    `).run(today, steps || 0, active_calories || 0, exercise_minutes || 0, resting_heart_rate || null);
+
+    console.log(`[Activity] ${today}: ${steps} pas, ${active_calories} kcal, ${exercise_minutes} min`);
+    res.json({ saved: true, date: today, steps, active_calories, exercise_minutes });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── API: Morning brief ──────────────────────
 app.get('/api/brief', async (req, res) => {
   try {
