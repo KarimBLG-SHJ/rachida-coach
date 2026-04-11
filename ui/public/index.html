@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rachida Health Coach</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f4f0;
+    color: #2d2d2d;
+    height: 100vh;
+    display: flex;
+  }
+
+  /* ── LEFT: Dashboard ─────────────── */
+  .dashboard {
+    width: 340px;
+    background: white;
+    border-right: 1px solid #e8e6e1;
+    overflow-y: auto;
+    padding: 20px;
+    flex-shrink: 0;
+  }
+
+  .dashboard h1 {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+  }
+
+  .dashboard .date {
+    color: #999;
+    font-size: 0.8rem;
+    margin-bottom: 20px;
+  }
+
+  .card {
+    background: #fafaf8;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  .card h2 {
+    font-size: 0.75rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+
+  .weight-big {
+    font-size: 2rem;
+    font-weight: 700;
+  }
+
+  .weight-big span {
+    font-size: 0.85rem;
+    color: #999;
+    font-weight: 400;
+  }
+
+  .macro-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #555;
+    margin-bottom: 4px;
+  }
+
+  .macro-bar {
+    background: #eee;
+    border-radius: 6px;
+    height: 20px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .macro-fill {
+    height: 100%;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    font-size: 0.7rem;
+    color: white;
+    font-weight: 600;
+    transition: width 0.4s ease;
+    min-width: 28px;
+  }
+
+  .cal { background: linear-gradient(90deg, #4CAF50, #66BB6A); }
+  .prot { background: linear-gradient(90deg, #2196F3, #42A5F5); }
+  .fat { background: linear-gradient(90deg, #FF9800, #FFB74D); }
+  .carbs { background: linear-gradient(90deg, #9C27B0, #BA68C8); }
+  .over { background: linear-gradient(90deg, #f44336, #e57373) !important; }
+
+  .meal-item {
+    font-size: 0.8rem;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .meal-item:last-child { border: none; }
+
+  .med-item, .supp-item {
+    font-size: 0.8rem;
+    padding: 4px 0;
+  }
+
+  .empty { color: #bbb; font-style: italic; font-size: 0.8rem; }
+
+  /* ── RIGHT: Chat ─────────────────── */
+  .chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .chat-header {
+    padding: 16px 24px;
+    background: white;
+    border-bottom: 1px solid #e8e6e1;
+    font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .msg {
+    max-width: 75%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .msg.user {
+    align-self: flex-end;
+    background: #4CAF50;
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+
+  .msg.coach {
+    align-self: flex-start;
+    background: white;
+    border: 1px solid #e8e6e1;
+    border-bottom-left-radius: 4px;
+  }
+
+  .msg.system {
+    align-self: center;
+    background: #fff9e6;
+    border: 1px solid #f0e6c0;
+    font-size: 0.8rem;
+    color: #888;
+    max-width: 90%;
+  }
+
+  .msg.loading {
+    align-self: flex-start;
+    background: white;
+    border: 1px solid #e8e6e1;
+    color: #999;
+    font-style: italic;
+  }
+
+  .chat-input {
+    padding: 16px 24px;
+    background: white;
+    border-top: 1px solid #e8e6e1;
+    display: flex;
+    gap: 10px;
+  }
+
+  .chat-input input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 24px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .chat-input input:focus {
+    border-color: #4CAF50;
+  }
+
+  .chat-input button {
+    padding: 12px 20px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .chat-input button:hover { background: #43A047; }
+  .chat-input button:disabled { background: #ccc; cursor: not-allowed; }
+
+  .quick-actions {
+    padding: 8px 24px;
+    background: white;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .quick-btn {
+    padding: 6px 12px;
+    background: #f5f4f0;
+    border: 1px solid #e8e6e1;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .quick-btn:hover {
+    background: #e8f5e9;
+    border-color: #4CAF50;
+  }
+
+  @media (max-width: 768px) {
+    body { flex-direction: column; }
+    .dashboard { width: 100%; height: auto; max-height: 40vh; border-right: none; border-bottom: 1px solid #e8e6e1; }
+    .msg { max-width: 90%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── DASHBOARD ──────────────────── -->
+<div class="dashboard" id="dashboard">
+  <h1>Rachida</h1>
+  <div class="date" id="dateLabel"></div>
+
+  <div class="card" id="weightCard" style="display:none">
+    <h2>⚖️ Poids</h2>
+    <div class="weight-big"><span id="weightValue">—</span> <span>kg</span></div>
+  </div>
+
+  <div class="card">
+    <h2>🎯 Macros du jour</h2>
+    <div class="macro-row"><span>Calories</span><span id="calLabel">0 / 0 kcal</span></div>
+    <div class="macro-bar"><div class="macro-fill cal" id="calBar" style="width:0%">0%</div></div>
+    <div class="macro-row"><span>Protéines</span><span id="protLabel">0 / 0g</span></div>
+    <div class="macro-bar"><div class="macro-fill prot" id="protBar" style="width:0%">0%</div></div>
+    <div class="macro-row"><span>Lipides</span><span id="fatLabel">0 / 0g</span></div>
+    <div class="macro-bar"><div class="macro-fill fat" id="fatBar" style="width:0%">0%</div></div>
+    <div class="macro-row"><span>Glucides</span><span id="carbsLabel">0 / 0g</span></div>
+    <div class="macro-bar"><div class="macro-fill carbs" id="carbsBar" style="width:0%">0%</div></div>
+  </div>
+
+  <div class="card">
+    <h2>🍽️ Repas</h2>
+    <div id="mealsList"><span class="empty">Aucun repas enregistré</span></div>
+  </div>
+
+  <div class="card">
+    <h2>💊 Médicaments</h2>
+    <div id="medsList"><span class="empty">Aucun médicament</span></div>
+  </div>
+</div>
+
+<!-- ── CHAT ───────────────────────── -->
+<div class="chat-area">
+  <div class="chat-header">💬 Coach Rachida</div>
+
+  <div class="chat-messages" id="messages">
+    <div class="msg system">Salut Rachida ! Dis-moi ce que tu as mangé, pose-moi une question, ou dis-moi tes médicaments — je suis là 😊</div>
+  </div>
+
+  <div class="quick-actions">
+    <button class="quick-btn" onclick="sendQuick('brief du matin')">☀️ Brief du matin</button>
+    <button class="quick-btn" onclick="sendQuick('qu\'est-ce que je peux manger ce soir ?')">🍽️ Idée dîner</button>
+    <button class="quick-btn" onclick="sendQuick('combien de calories il me reste ?')">📊 Reste du jour</button>
+    <button class="quick-btn" onclick="sendQuick('un snack sain ?')">🥜 Snack</button>
+    <button class="quick-btn" onclick="sendQuick('mes compléments ?')">💊 Compléments</button>
+    <button class="quick-btn" onclick="loadWeekly()">📈 Bilan semaine</button>
+  </div>
+
+  <div class="chat-input">
+    <input type="text" id="chatInput" placeholder="Dis quelque chose à ton coach..." autocomplete="off">
+    <button id="sendBtn" onclick="sendMessage()">Envoyer</button>
+  </div>
+</div>
+
+<script>
+const messagesEl = document.getElementById('messages');
+const inputEl = document.getElementById('chatInput');
+const sendBtn = document.getElementById('sendBtn');
+
+// ── Load dashboard on start ──────
+async function loadDashboard() {
+  try {
+    const res = await fetch('/api/dashboard');
+    const data = await res.json();
+    updateDashboard(data);
+  } catch (e) {
+    console.error('Dashboard load error:', e);
+  }
+}
+
+function updateDashboard(d) {
+  const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const now = new Date();
+  document.getElementById('dateLabel').textContent =
+    `${days[now.getDay()]} ${now.toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})}`;
+
+  // Weight
+  if (d.weight) {
+    document.getElementById('weightCard').style.display = '';
+    document.getElementById('weightValue').textContent = d.weight.weight_kg;
+  }
+
+  // Macros
+  const c = d.consumed, t = d.targets;
+  document.getElementById('calLabel').textContent = `${Math.round(c.calories)} / ${t.calories_target} kcal`;
+  document.getElementById('protLabel').textContent = `${Math.round(c.protein_g)} / ${t.protein_target_g}g`;
+  document.getElementById('fatLabel').textContent = `${Math.round(c.fat_g)} / ${t.fat_target_g}g`;
+  document.getElementById('carbsLabel').textContent = `${Math.round(c.carbs_g)} / ${t.carbs_target_g}g`;
+
+  setBar('calBar', d.calPct, 'cal');
+  setBar('protBar', d.protPct, 'prot');
+  setBar('fatBar', d.fatPct, 'fat');
+  setBar('carbsBar', d.carbsPct, 'carbs');
+
+  // Meals
+  const mealsEl = document.getElementById('mealsList');
+  if (d.meals.length === 0) {
+    mealsEl.innerHTML = '<span class="empty">Aucun repas enregistré</span>';
+  } else {
+    mealsEl.innerHTML = d.meals.map(m => {
+      const emoji = {breakfast:'🌅',lunch:'🍽️',dinner:'🌙',snack:'🫐'}[m.meal_type] || '🍴';
+      return `<div class="meal-item"><span>${emoji} ${m.description.substring(0,30)}</span><span>${Math.round(m.calories)} kcal</span></div>`;
+    }).join('');
+  }
+
+  // Medications
+  const medsEl = document.getElementById('medsList');
+  if (d.medications.length === 0) {
+    medsEl.innerHTML = '<span class="empty">Aucun médicament</span>';
+  } else {
+    medsEl.innerHTML = d.medications.map(m =>
+      `<div class="med-item">💊 ${m.name}${m.dose ? ' — '+m.dose : ''}</div>`
+    ).join('');
+  }
+}
+
+function setBar(id, pct, cls) {
+  const el = document.getElementById(id);
+  const clamped = Math.min(pct, 100);
+  el.style.width = Math.max(clamped, 3) + '%';
+  el.textContent = pct + '%';
+  el.className = 'macro-fill ' + cls + (pct > 100 ? ' over' : '');
+}
+
+// ── Chat ─────────────────────────
+async function sendMessage() {
+  const msg = inputEl.value.trim();
+  if (!msg) return;
+
+  addMessage(msg, 'user');
+  inputEl.value = '';
+  sendBtn.disabled = true;
+
+  const loadingEl = addMessage('...', 'loading');
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg })
+    });
+
+    const data = await res.json();
+    loadingEl.remove();
+
+    if (data.error) {
+      addMessage('Erreur : ' + data.error, 'system');
+    } else {
+      addMessage(data.response, 'coach');
+      if (data.dashboard) updateDashboard(data.dashboard);
+    }
+  } catch (e) {
+    loadingEl.remove();
+    addMessage('Erreur de connexion au coach', 'system');
+  }
+
+  sendBtn.disabled = false;
+  inputEl.focus();
+}
+
+function sendQuick(text) {
+  inputEl.value = text;
+  sendMessage();
+}
+
+function addMessage(text, type) {
+  const el = document.createElement('div');
+  el.className = 'msg ' + type;
+  el.textContent = text;
+  messagesEl.appendChild(el);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return el;
+}
+
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+async function loadWeekly() {
+  addMessage('Bilan de la semaine...', 'system');
+  const loadingEl = addMessage('...', 'loading');
+  try {
+    const res = await fetch('/api/weekly');
+    const data = await res.json();
+    loadingEl.remove();
+    addMessage(data.review || data.error, data.review ? 'coach' : 'system');
+  } catch (e) {
+    loadingEl.remove();
+    addMessage('Erreur lors du chargement du bilan', 'system');
+  }
+}
+
+// Init
+loadDashboard();
+inputEl.focus();
+</script>
+</body>
+</html>

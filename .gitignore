@@ -1,0 +1,11 @@
+node_modules/
+.env
+db/health.db
+data/.withings-tokens.json
+data/photos/
+data/bloodwork/*.pdf
+data/apple-health/*.csv
+logs/
+.daemon.pid
+ui/daily-report.html
+.claude/
