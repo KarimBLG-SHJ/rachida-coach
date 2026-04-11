@@ -211,14 +211,50 @@ app.post('/api/activity', (req, res) => {
   }
 });
 
-// ── API: Withings OAuth callback ─────────────
-app.get('/api/withings/callback', (req, res) => {
-  const { code, state } = req.query;
-  if (code) {
-    console.log('[Withings] OAuth code received:', code.substring(0, 10) + '...');
-    res.send('<html><body><h2>Withings connecté !</h2><p>Tu peux fermer cette page.</p></body></html>');
-  } else {
-    res.send('<html><body><h2>OK</h2></body></html>');
+// ── API: Withings OAuth ──────────────────────
+import { getAuthorizationURL, exchangeCode, syncWeight, getLatestWeight } from '../integrations/withings.js';
+
+// Start OAuth flow — redirects to Withings
+app.get('/api/withings/connect', (req, res) => {
+  const url = getAuthorizationURL();
+  res.redirect(url);
+});
+
+// OAuth callback — receives code, exchanges for tokens
+app.get('/api/withings/callback', async (req, res) => {
+  const { code } = req.query;
+  if (!code) {
+    return res.send('<html><body><h2>OK</h2></body></html>');
+  }
+
+  try {
+    console.log('[Withings] OAuth code received, exchanging...');
+    await exchangeCode(code);
+    console.log('[Withings] Tokens saved! Syncing weight...');
+
+    const data = await syncWeight();
+    const weightMsg = data ? `Poids synced: ${data.weight_kg} kg` : 'Pas de pesée récente';
+
+    res.send(`<html><body style="font-family:system-ui;text-align:center;padding:40px">
+      <h2>✅ Withings connecté !</h2>
+      <p>${weightMsg}</p>
+      <p>Tu peux fermer cette page et retourner au coach.</p>
+    </body></html>`);
+  } catch (err) {
+    console.error('[Withings] OAuth error:', err.message);
+    res.send(`<html><body style="font-family:system-ui;text-align:center;padding:40px">
+      <h2>❌ Erreur</h2><p>${err.message}</p>
+    </body></html>`);
+  }
+});
+
+// Manual sync trigger
+app.get('/api/withings/sync', async (req, res) => {
+  try {
+    const data = await syncWeight();
+    res.json({ synced: true, data });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

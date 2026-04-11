@@ -15,27 +15,27 @@ import { fileURLToPath } from 'url';
 import db from '../db/connection.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const TOKEN_FILE = join(__dirname, '../data/.withings-tokens.json');
 
 const WITHINGS_API = 'https://wbsapi.withings.net';
 const WITHINGS_AUTH = 'https://account.withings.com/oauth2_user/authorize2';
 const WITHINGS_TOKEN = 'https://wbsapi.withings.net/v2/oauth2';
 
 // ─────────────────────────────────────────────
-// TOKEN MANAGEMENT
+// TOKEN MANAGEMENT — stored in SQLite (survives redeploys)
 // ─────────────────────────────────────────────
 
 function loadTokens() {
-  if (!existsSync(TOKEN_FILE)) return null;
-  try {
-    return JSON.parse(readFileSync(TOKEN_FILE, 'utf-8'));
-  } catch {
-    return null;
-  }
+  const row = db.prepare("SELECT value FROM coach_memory WHERE key = 'withings_tokens'").get();
+  if (!row) return null;
+  try { return JSON.parse(row.value); } catch { return null; }
 }
 
 function saveTokens(tokens) {
-  writeFileSync(TOKEN_FILE, JSON.stringify(tokens, null, 2));
+  db.prepare(`
+    INSERT INTO coach_memory (key, value, category, updated_at)
+    VALUES ('withings_tokens', ?, 'system', datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = datetime('now')
+  `).run(JSON.stringify(tokens), JSON.stringify(tokens));
 }
 
 /**
@@ -170,8 +170,8 @@ export function getAuthorizationURL() {
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: process.env.WITHINGS_CLIENT_ID,
-    redirect_uri: process.env.WITHINGS_REDIRECT_URI || 'http://localhost:3000/callback',
-    scope: 'user.metrics',
+    redirect_uri: process.env.WITHINGS_REDIRECT_URI || 'https://rachida-coach-production.up.railway.app/api/withings/callback',
+    scope: 'user.metrics,user.activity',
     state: 'rachida-coach'
   });
 
@@ -212,6 +212,6 @@ export function isConfigured() {
   return !!(
     process.env.WITHINGS_CLIENT_ID &&
     process.env.WITHINGS_CLIENT_SECRET &&
-    existsSync(TOKEN_FILE)
+    loadTokens()
   );
 }
