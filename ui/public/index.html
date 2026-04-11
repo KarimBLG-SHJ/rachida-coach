@@ -7,11 +7,18 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+  }
+
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: #f5f4f0;
     color: #2d2d2d;
     height: 100vh;
+    height: 100dvh;
     display: flex;
   }
 
@@ -411,10 +418,12 @@
   .chat-messages {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 20px 24px;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    max-width: 100%;
   }
 
   .msg {
@@ -425,6 +434,8 @@
     line-height: 1.5;
     white-space: pre-wrap;
     word-wrap: break-word;
+    overflow-wrap: break-word;
+    overflow: hidden;
   }
 
   .msg.user {
@@ -507,6 +518,21 @@
 
   .photo-btn:hover { background: #e8f5e9; }
 
+  .dash-toggle {
+    display: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 2px 6px;
+    border-radius: 8px;
+    transition: background 0.2s;
+  }
+
+  .dash-toggle:hover { background: #e8f5e9; }
+
+  @media (max-width: 768px) {
+    .dash-toggle { display: inline-block; }
+  }
+
   .quick-actions {
     padding: 8px 24px;
     background: white;
@@ -531,9 +557,35 @@
   }
 
   @media (max-width: 768px) {
-    body { flex-direction: column; }
-    .dashboard { width: 100%; height: auto; max-height: 40vh; border-right: none; border-bottom: 1px solid #e8e6e1; }
-    .msg { max-width: 90%; }
+    body { flex-direction: column; height: 100vh; overflow: hidden; }
+
+    .dashboard {
+      width: 100%;
+      height: auto;
+      max-height: 0;
+      border-right: none;
+      border-bottom: 1px solid #e8e6e1;
+      overflow-y: auto;
+      transition: max-height 0.3s ease;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .dashboard.open {
+      max-height: 60vh;
+      padding: 16px;
+    }
+
+    .chat-area { flex: 1; min-height: 0; }
+    .chat-messages { padding: 12px 16px; }
+    .msg { max-width: 92%; font-size: 0.85rem; }
+    .meal-card { max-width: 95%; }
+    .chat-input { padding: 10px 12px; }
+    .chat-input input { padding: 10px 14px; font-size: 0.85rem; }
+    .chat-header { padding: 10px 16px; font-size: 0.9rem; }
+
+    .quick-actions { padding: 6px 12px; }
+    .quick-btn { font-size: 0.7rem; padding: 5px 10px; white-space: nowrap; flex-shrink: 0; }
   }
 </style>
 </head>
@@ -585,7 +637,10 @@
 
 <!-- ── CHAT ───────────────────────── -->
 <div class="chat-area">
-  <div class="chat-header">💬 Coach Rachida</div>
+  <div class="chat-header">
+    <span class="dash-toggle" onclick="document.getElementById('dashboard').classList.toggle('open')">📊</span>
+    💬 Coach Rachida
+  </div>
 
   <div class="chat-messages" id="messages">
     <div class="msg system">Salut Rachida ! Dis-moi ce que tu as mangé, pose-moi une question, ou dis-moi tes médicaments — je suis là 😊</div>
