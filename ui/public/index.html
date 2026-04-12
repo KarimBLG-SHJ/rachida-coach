@@ -106,6 +106,7 @@ body {
   padding: 16px;
   width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 .sidebar-scroll h1 {
@@ -779,105 +780,23 @@ body {
 .modal-confirm:hover { background: #c62828; }
 
 /* ==========================================================
-   DESKTOP LAYOUT — 768px+
+   OVERFLOW SAFETY — all screen sizes mobile-only
    ========================================================== */
-@media (min-width: 768px) {
-  .app {
-    flex-direction: row;
-  }
+#weightSparkline svg {
+  width: 100%;
+  max-width: 100%;
+  display: block;
+}
 
-  /* Tab bar hidden on desktop */
-  .tab-bar {
-    display: none;
-  }
+#activityData {
+  max-width: 100%;
+  overflow: hidden;
+}
 
-  /* Dashboard panel becomes a fixed sidebar, always visible */
-  #panelDashboard {
-    display: flex;
-    flex-direction: column;
-    width: 340px;
-    min-width: 340px;
-    max-width: 340px;
-    height: 100vh;
-    height: 100dvh;
-    border-right: 1px solid #e8e6e1;
-    background: white;
-    flex-shrink: 0;
-  }
-
-  /* Supplements panel content merges into sidebar on desktop */
-  #panelSupplements {
-    display: none;
-  }
-
-  /* Chat panel takes remaining space */
-  #panelChat {
-    display: flex;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .chat-header {
-    padding: 16px 24px;
-    font-size: 1rem;
-  }
-
-  .chat-messages {
-    padding: 20px 24px;
-  }
-
-  .msg {
-    max-width: 75%;
-    font-size: 0.9rem;
-    padding: 12px 16px;
-  }
-
-  .msg.user {
-    max-width: 70%;
-  }
-
-  .msg.coach {
-    max-width: 85%;
-  }
-
-  .meal-card {
-    max-width: 400px;
-  }
-
-  .meal-card-header { padding: 16px 20px 8px; }
-  .meal-card-items   { padding: 0 20px 12px; }
-  .meal-card-divider { margin: 0 20px; }
-  .meal-card-calories { padding: 16px 20px; }
-  .meal-card-macros  { padding: 8px 16px 20px; }
-  .meal-card-progress { padding: 12px 20px; }
-  .meal-card-tip      { padding: 14px 20px; }
-  .meal-card-actions  { padding: 12px 20px; }
-
-  .macro-circle .ring {
-    width: 52px;
-    height: 52px;
-    font-size: 0.85rem;
-  }
-
-  .macro-circle .ring-label { font-size: 0.7rem; }
-
-  .quick-actions {
-    padding: 8px 24px;
-  }
-
-  .quick-btn {
-    font-size: 0.75rem;
-    padding: 6px 12px;
-  }
-
-  .chat-input {
-    padding: 10px 12px;
-  }
-
-  .chat-input input[type="text"] {
-    padding: 12px 16px;
-    font-size: 0.9rem;
-  }
+#activityData svg {
+  width: 100%;
+  max-width: 100%;
+  display: block;
 }
 </style>
 </head>
