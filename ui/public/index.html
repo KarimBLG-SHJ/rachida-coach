@@ -2,923 +2,1072 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Rachida Health Coach</title>
 <style>
-  /* ============================================
-     MOBILE-FIRST CSS — designed for 375px first
-     Desktop (768px+) added via media query
-     ============================================ */
+/* ==========================================================
+   RESET & BASE — Mobile-first (375px base)
+   ========================================================== */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  height: 100vh;
+  height: 100dvh;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f5f4f0;
+  color: #2d2d2d;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ==========================================================
+   MOBILE LAYOUT — Tab-based single column
+   ========================================================== */
+
+/* -- App shell -- */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* -- Tab panels -- */
+.tab-panel {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+.tab-panel.active {
+  display: flex;
+}
+
+/* -- Bottom tab bar (mobile only) -- */
+.tab-bar {
+  display: flex;
+  background: white;
+  border-top: 1px solid #e8e6e1;
+  flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tab-bar-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px 6px;
+  border: none;
+  background: none;
+  font-size: 0.65rem;
+  color: #999;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.tab-bar-btn .tab-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.tab-bar-btn.active {
+  color: #4CAF50;
+}
+
+/* ==========================================================
+   SIDEBAR / DASHBOARD — scrollable content
+   ========================================================== */
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.sidebar-scroll h1 {
+  font-size: 1.2rem;
+  margin-bottom: 2px;
+}
+
+/* -- Day nav header -- */
+.dash-day-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.dash-day-btn {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dash-day-label {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+/* -- Cards -- */
+.card {
+  background: #fafaf8;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.card h2 {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+/* -- Weight -- */
+.weight-big {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.weight-big span {
+  font-size: 0.85rem;
+  color: #999;
+  font-weight: 400;
+}
+
+/* -- Macros -- */
+.macro-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #555;
+  margin-bottom: 4px;
+  min-width: 0;
+}
+
+.macro-row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.macro-bar {
+  background: #eee;
+  border-radius: 6px;
+  height: 20px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+.macro-fill {
+  height: 100%;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-size: 0.7rem;
+  color: white;
+  font-weight: 600;
+  transition: width 0.4s ease;
+  min-width: 28px;
+}
+
+.cal  { background: linear-gradient(90deg, #4CAF50, #66BB6A); }
+.prot { background: linear-gradient(90deg, #2196F3, #42A5F5); }
+.fat  { background: linear-gradient(90deg, #FF9800, #FFB74D); }
+.carbs { background: linear-gradient(90deg, #9C27B0, #BA68C8); }
+.over { background: linear-gradient(90deg, #f44336, #e57373); }
+
+/* -- Meals list -- */
+.meal-item {
+  font-size: 0.8rem;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.meal-item:last-child { border: none; }
+
+.meal-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.meal-actions {
+  display: inline-flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.meal-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #e57373;
+}
+
+.meal-del:hover { background: #fce4ec; }
+
+.meal-desc {
+  font-size: 0.72rem;
+  color: #999;
+}
+
+/* -- Day nav (7-day pills) -- */
+.day-nav {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  max-width: 100%;
+}
+
+.day-nav::-webkit-scrollbar { display: none; }
+
+.day-btn {
+  padding: 4px 8px;
+  border: 1px solid #e8e6e1;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  background: white;
+  white-space: nowrap;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.day-btn:hover { border-color: #4CAF50; }
+.day-btn.active { background: #4CAF50; color: white; border-color: #4CAF50; }
+
+/* -- Micronutrients -- */
+.micro-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  padding: 3px 0;
+  border-bottom: 1px solid #f8f8f8;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.micro-row > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.micro-row:last-child { border: none; }
+
+.micro-bar {
+  background: #eee;
+  border-radius: 4px;
+  height: 6px;
+  width: 60px;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 6px;
+  flex-shrink: 0;
+}
+
+.micro-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: #66BB6A;
+  transition: width 0.3s;
+}
+
+.micro-fill.low  { background: #FF9800; }
+.micro-fill.good { background: #66BB6A; }
+.micro-fill.high { background: #42A5F5; }
+
+/* -- Supplements -- */
+.supp-group-title {
+  font-size: 0.7rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.supp-group-title:first-child { margin-top: 0; }
+
+.supp-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  cursor: pointer;
+  font-size: 0.8rem;
+  border-bottom: 1px solid #f5f5f5;
+  transition: opacity 0.2s;
+  min-width: 0;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.supp-check > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supp-check:last-child { border: none; }
+.supp-check:hover { opacity: 0.7; }
+.supp-check.taken { opacity: 0.5; text-decoration: line-through; }
+
+.supp-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #4CAF50;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.supp-time {
+  font-size: 0.65rem;
+  color: #bbb;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.med-item {
+  font-size: 0.8rem;
+  padding: 4px 0;
+  word-break: break-word;
+}
+
+.empty {
+  color: #bbb;
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
+/* ==========================================================
+   CHAT PANEL
+   ========================================================== */
+.chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.chat-header {
+  padding: 10px 16px;
+  background: white;
+  border-bottom: 1px solid #e8e6e1;
+  font-weight: 600;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 100%;
+  min-height: 0;
+}
+
+/* -- Messages -- */
+.msg {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.msg.user {
+  align-self: flex-end;
+  background: #4CAF50;
+  color: white;
+  border-bottom-right-radius: 4px;
+  max-width: 75%;
+}
+
+.msg.coach {
+  align-self: flex-start;
+  background: white;
+  border: 1px solid #e8e6e1;
+  border-bottom-left-radius: 4px;
+}
+
+.msg.system {
+  align-self: center;
+  background: #fff9e6;
+  border: 1px solid #f0e6c0;
+  font-size: 0.8rem;
+  color: #888;
+  max-width: 90%;
+}
+
+.msg.loading {
+  align-self: flex-start;
+  background: white;
+  border: 1px solid #e8e6e1;
+  color: #999;
+  font-style: italic;
+}
+
+/* -- Meal card in chat -- */
+.meal-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 380px;
+  align-self: flex-start;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  min-width: 0;
+}
+
+.meal-card-header {
+  padding: 14px 16px 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #1a1a1a;
+  word-break: break-word;
+}
+
+.meal-card-items {
+  padding: 0 16px 12px;
+  color: #888;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.meal-card-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e0e0e0, transparent);
+  margin: 0 16px;
+}
+
+.meal-card-calories {
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.meal-card-calories .label { font-size: 0.9rem; color: #555; font-weight: 500; }
+.meal-card-calories .value { font-size: 1.4rem; font-weight: 700; color: #1a1a1a; }
+
+.meal-card-macros {
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 8px 16px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.macro-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.macro-circle .ring {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.macro-circle .ring.fat   { background: #FFF8E1; color: #F9A825; border: 3px solid #FFD54F; }
+.macro-circle .ring.prot  { background: #FFF0F0; color: #E53935; border: 3px solid #EF9A9A; }
+.macro-circle .ring.carbs { background: #E3F2FD; color: #1565C0; border: 3px solid #90CAF9; }
+.macro-circle .ring.fiber { background: #F1F8E9; color: #558B2F; border: 3px solid #AED581; }
+
+.macro-circle .ring-sub   { font-size: 0.6rem; color: #aaa; margin-top: 1px; }
+.macro-circle .ring-label { font-size: 0.65rem; color: #888; }
+
+.meal-card-progress {
+  padding: 10px 16px;
+  background: #f8f8f6;
+  border-top: 1px solid #eee;
+  word-break: break-word;
+}
+
+.meal-card-progress .pline {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: #555;
+  margin-bottom: 3px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.meal-card-tip {
+  padding: 12px 16px;
+  background: #f0f7ff;
+  border-top: 1px solid #dde8f0;
+  font-size: 0.78rem;
+  color: #2c5282;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.meal-card-tip strong { color: #1a365d; }
+
+.meal-card-actions {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid #f0f0f0;
+  overflow: visible;
+}
+
+.btn-save-meal {
+  padding: 12px;
+  background: #2d3748;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s;
+  width: 100%;
+}
+
+.btn-save-meal:hover { background: #1a202c; }
+
+.btn-correct {
+  padding: 8px;
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: #90a4ae;
+  text-decoration: underline;
+  text-align: center;
+}
+
+.btn-correct:hover { color: #546e7a; }
+
+.btn-save {
+  padding: 10px 16px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-save:hover { background: #43A047; }
+
+/* -- Quick actions -- */
+.quick-actions {
+  padding: 6px 10px;
+  background: white;
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  max-width: 100%;
+  flex-shrink: 0;
+}
+
+.quick-actions::-webkit-scrollbar { display: none; }
+
+.quick-btn {
+  padding: 5px 10px;
+  background: #f5f4f0;
+  border: 1px solid #e8e6e1;
+  border-radius: 16px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.quick-btn:hover {
+  background: #e8f5e9;
+  border-color: #4CAF50;
+}
+
+/* -- Chat input bar -- */
+.chat-input {
+  padding: 8px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  background: white;
+  border-top: 1px solid #e8e6e1;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  max-width: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.photo-btn {
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.photo-btn:hover { background: #e8f5e9; }
+
+.chat-input input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 24px;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.chat-input input[type="text"]:focus {
+  border-color: #4CAF50;
+}
+
+.send-btn {
+  padding: 10px 14px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.send-btn:hover { background: #43A047; }
+.send-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+/* -- Modal -- */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-box {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.modal-box p {
+  font-size: 0.95rem;
+  color: #333;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+.modal-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.modal-btns button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal-cancel  { background: #f0f0f0; color: #555; }
+.modal-confirm { background: #e53935; color: white; }
+.modal-cancel:hover  { background: #e0e0e0; }
+.modal-confirm:hover { background: #c62828; }
+
+/* ==========================================================
+   DESKTOP LAYOUT — 768px+
+   ========================================================== */
+@media (min-width: 768px) {
+  .app {
+    flex-direction: row;
   }
 
-  html, body {
-    overflow-x: hidden;
-    width: 100%;
-    max-width: 100vw;
+  /* Tab bar hidden on desktop */
+  .tab-bar {
+    display: none;
   }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f5f4f0;
-    color: #2d2d2d;
+  /* Dashboard panel becomes a fixed sidebar, always visible */
+  #panelDashboard {
+    display: flex;
+    flex-direction: column;
+    width: 340px;
+    min-width: 340px;
+    max-width: 340px;
     height: 100vh;
     height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  /* ── DASHBOARD (hidden by default on mobile) ── */
-  .dashboard {
-    width: 100%;
-    max-width: 100%;
+    border-right: 1px solid #e8e6e1;
     background: white;
-    border-bottom: 1px solid #e8e6e1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    max-height: 0;
-    padding: 0 16px;
-    flex-shrink: 0;
-    transition: max-height 0.3s ease, padding 0.3s ease;
-  }
-
-  .dashboard.open {
-    max-height: 60vh;
-    padding: 16px;
-  }
-
-  .dashboard h1 {
-    font-size: 1.2rem;
-    margin-bottom: 2px;
-  }
-
-  .dashboard .date {
-    color: #999;
-    font-size: 0.8rem;
-    margin-bottom: 20px;
-  }
-
-  .card {
-    background: #fafaf8;
-    border: 1px solid #eee;
-    border-radius: 10px;
-    padding: 14px;
-    margin-bottom: 12px;
-    max-width: 100%;
-    overflow: hidden;
-  }
-
-  .card h2 {
-    font-size: 0.75rem;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 10px;
-  }
-
-  .weight-big {
-    font-size: 2rem;
-    font-weight: 700;
-  }
-
-  .weight-big span {
-    font-size: 0.85rem;
-    color: #999;
-    font-weight: 400;
-  }
-
-  .macro-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.8rem;
-    color: #555;
-    margin-bottom: 4px;
-    min-width: 0;
-  }
-
-  .macro-row span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .macro-bar {
-    background: #eee;
-    border-radius: 6px;
-    height: 20px;
-    overflow: hidden;
-    margin-bottom: 8px;
-    max-width: 100%;
-  }
-
-  .macro-fill {
-    height: 100%;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    padding-left: 8px;
-    font-size: 0.7rem;
-    color: white;
-    font-weight: 600;
-    transition: width 0.4s ease;
-    min-width: 28px;
-  }
-
-  .cal { background: linear-gradient(90deg, #4CAF50, #66BB6A); }
-  .prot { background: linear-gradient(90deg, #2196F3, #42A5F5); }
-  .fat { background: linear-gradient(90deg, #FF9800, #FFB74D); }
-  .carbs { background: linear-gradient(90deg, #9C27B0, #BA68C8); }
-  .over { background: linear-gradient(90deg, #f44336, #e57373) !important; }
-
-  .meal-item {
-    font-size: 0.8rem;
-    padding: 6px 0;
-    border-bottom: 1px solid #f0f0f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  .meal-item > span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .meal-item:last-child { border: none; }
-
-  .meal-actions {
-    display: flex;
-    gap: 4px;
-    opacity: 0;
-    transition: opacity 0.2s;
     flex-shrink: 0;
   }
 
-  .meal-item:hover .meal-actions { opacity: 1; }
-
-  .meal-del {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-    color: #e57373;
+  /* Supplements panel content merges into sidebar on desktop */
+  #panelSupplements {
+    display: none;
   }
 
-  .meal-del:hover { background: #fce4ec; }
-
-  .med-item, .supp-item {
-    font-size: 0.8rem;
-    padding: 4px 0;
-    word-break: break-word;
-  }
-
-  .supp-group-title {
-    font-size: 0.7rem;
-    color: #999;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 8px;
-    margin-bottom: 4px;
-  }
-
-  .supp-group-title:first-child { margin-top: 0; }
-
-  .supp-check {
+  /* Chat panel takes remaining space */
+  #panelChat {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 5px 0;
-    cursor: pointer;
-    font-size: 0.8rem;
-    border-bottom: 1px solid #f5f5f5;
-    transition: opacity 0.2s;
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  .supp-check > span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .supp-check:last-child { border: none; }
-  .supp-check:hover { opacity: 0.7; }
-
-  .supp-check.taken { opacity: 0.5; text-decoration: line-through; }
-
-  .supp-check input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    accent-color: #4CAF50;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-
-  .supp-time {
-    font-size: 0.65rem;
-    color: #bbb;
-    margin-left: auto;
-    flex-shrink: 0;
-  }
-
-  .day-nav {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 8px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    max-width: 100%;
-  }
-
-  .day-nav::-webkit-scrollbar { display: none; }
-
-  .day-btn {
-    padding: 4px 8px;
-    border: 1px solid #e8e6e1;
-    border-radius: 8px;
-    font-size: 0.7rem;
-    cursor: pointer;
-    background: white;
-    white-space: nowrap;
-    transition: all 0.2s;
-    flex-shrink: 0;
-  }
-
-  .day-btn:hover { border-color: #4CAF50; }
-  .day-btn.active { background: #4CAF50; color: white; border-color: #4CAF50; }
-
-  .micro-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    padding: 3px 0;
-    border-bottom: 1px solid #f8f8f8;
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  .micro-row > span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .micro-row:last-child { border: none; }
-
-  .micro-bar {
-    background: #eee;
-    border-radius: 4px;
-    height: 6px;
-    width: 60px;
-    overflow: hidden;
-    display: inline-block;
-    vertical-align: middle;
-    margin-left: 6px;
-    flex-shrink: 0;
-  }
-
-  .micro-fill {
-    height: 100%;
-    border-radius: 4px;
-    background: #66BB6A;
-    transition: width 0.3s;
-  }
-
-  .micro-fill.low { background: #FF9800; }
-  .micro-fill.good { background: #66BB6A; }
-  .micro-fill.high { background: #42A5F5; }
-
-  /* ── CHAT AREA ── */
-  .chat-area {
     flex: 1;
-    display: flex;
-    flex-direction: column;
     min-width: 0;
-    min-height: 0;
-    max-width: 100%;
-    overflow: hidden;
   }
 
   .chat-header {
-    padding: 10px 16px;
-    background: white;
-    border-bottom: 1px solid #e8e6e1;
-    font-weight: 600;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-    max-width: 100%;
+    padding: 16px 24px;
+    font-size: 1rem;
   }
-
-  .dash-toggle {
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 2px 6px;
-    border-radius: 8px;
-    transition: background 0.2s;
-    display: inline-block;
-    flex-shrink: 0;
-  }
-
-  .dash-toggle:hover { background: #e8f5e9; }
 
   .chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 12px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    max-width: 100%;
-    min-height: 0;
+    padding: 20px 24px;
   }
 
   .msg {
-    max-width: 85%;
-    padding: 10px 14px;
-    border-radius: 16px;
-    font-size: 0.85rem;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word;
-    overflow: hidden;
-    min-width: 0;
+    max-width: 75%;
+    font-size: 0.9rem;
+    padding: 12px 16px;
   }
 
   .msg.user {
-    align-self: flex-end;
-    background: #4CAF50;
-    color: white;
-    border-bottom-right-radius: 4px;
-    max-width: 75%;
-    word-break: break-word;
-    overflow-wrap: break-word;
+    max-width: 70%;
   }
 
   .msg.coach {
-    align-self: flex-start;
-    background: white;
-    border: 1px solid #e8e6e1;
-    border-bottom-left-radius: 4px;
     max-width: 85%;
   }
 
-  .msg.system {
-    align-self: center;
-    background: #fff9e6;
-    border: 1px solid #f0e6c0;
-    font-size: 0.8rem;
-    color: #888;
-    max-width: 90%;
-  }
-
-  .msg.loading {
-    align-self: flex-start;
-    background: white;
-    border: 1px solid #e8e6e1;
-    color: #999;
-    font-style: italic;
-  }
-
-  /* ── Meal card in chat ── */
   .meal-card {
-    background: white;
-    border-radius: 20px;
-    overflow: hidden;
-    width: calc(100% - 16px);
-    max-width: 380px;
-    align-self: flex-start;
-    font-size: 0.85rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    min-width: 0;
+    max-width: 400px;
   }
 
-  .meal-card .meal-card-actions {
-    overflow: visible;
-  }
-
-  .meal-card-header {
-    padding: 14px 16px 8px;
-    font-weight: 700;
-    font-size: 1rem;
-    color: #1a1a1a;
-    word-break: break-word;
-  }
-
-  .meal-card-items {
-    padding: 0 16px 12px;
-    color: #888;
-    font-size: 0.8rem;
-    line-height: 1.5;
-    word-break: break-word;
-  }
-
-  .meal-card-divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, #e0e0e0, transparent);
-    margin: 0 16px;
-  }
-
-  .meal-card-calories {
-    padding: 14px 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .meal-card-calories .label { font-size: 0.9rem; color: #555; font-weight: 500; }
-  .meal-card-calories .value { font-size: 1.4rem; font-weight: 700; color: #1a1a1a; }
-
-  .meal-card-macros {
-    display: flex;
-    justify-content: space-around;
-    padding: 8px 8px 16px;
-    max-width: 100%;
-    overflow: hidden;
-  }
-
-  .macro-circle {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    min-width: 0;
-  }
+  .meal-card-header { padding: 16px 20px 8px; }
+  .meal-card-items   { padding: 0 20px 12px; }
+  .meal-card-divider { margin: 0 20px; }
+  .meal-card-calories { padding: 16px 20px; }
+  .meal-card-macros  { padding: 8px 16px 20px; }
+  .meal-card-progress { padding: 12px 20px; }
+  .meal-card-tip      { padding: 14px 20px; }
+  .meal-card-actions  { padding: 12px 20px; }
 
   .macro-circle .ring {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 0.8rem;
-    position: relative;
-    flex-shrink: 0;
-  }
-
-  .macro-circle .ring.fat { background: #FFF8E1; color: #F9A825; border: 3px solid #FFD54F; }
-  .macro-circle .ring.prot { background: #FFF0F0; color: #E53935; border: 3px solid #EF9A9A; }
-  .macro-circle .ring.carbs { background: #E3F2FD; color: #1565C0; border: 3px solid #90CAF9; }
-  .macro-circle .ring.fiber { background: #F1F8E9; color: #558B2F; border: 3px solid #AED581; }
-
-  .macro-circle .ring-sub { font-size: 0.6rem; color: #aaa; margin-top: 1px; }
-  .macro-circle .ring-label { font-size: 0.65rem; color: #888; }
-
-  .meal-card-progress {
-    padding: 10px 16px;
-    background: #f8f8f6;
-    border-top: 1px solid #eee;
-    word-break: break-word;
-  }
-
-  .meal-card-progress .pline {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.78rem;
-    color: #555;
-    margin-bottom: 3px;
-    min-width: 0;
-    flex-wrap: wrap;
-  }
-
-  .meal-card-tip {
-    padding: 12px 16px;
-    background: #f0f7ff;
-    border-top: 1px solid #dde8f0;
-    font-size: 0.78rem;
-    color: #2c5282;
-    line-height: 1.5;
-    word-break: break-word;
-  }
-
-  .meal-card-tip strong { color: #1a365d; }
-
-  .meal-card-actions {
-    padding: 12px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    border-top: 1px solid #f0f0f0;
-  }
-
-  .btn-save-meal {
-    padding: 12px;
-    background: #2d3748;
-    color: white;
-    border: none;
-    border-radius: 12px;
+    width: 52px;
+    height: 52px;
     font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    text-align: center;
-    transition: background 0.2s;
-    width: 100%;
   }
 
-  .btn-save-meal:hover { background: #1a202c; }
+  .macro-circle .ring-label { font-size: 0.7rem; }
 
-  .btn-correct {
-    padding: 8px;
-    background: none;
-    border: none;
-    font-size: 0.8rem;
-    cursor: pointer;
-    color: #90a4ae;
-    text-decoration: underline;
-    text-align: center;
-  }
-
-  .btn-correct:hover { color: #546e7a; }
-
-  .btn-save {
-    padding: 10px 16px;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .btn-save:hover { background: #43A047; }
-
-  /* Custom modal */
-  .modal-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 20px;
-  }
-
-  .modal-box {
-    background: white;
-    border-radius: 16px;
-    padding: 24px;
-    max-width: 320px;
-    width: 100%;
-    text-align: center;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-  }
-
-  .modal-box p {
-    font-size: 0.95rem;
-    color: #333;
-    margin-bottom: 20px;
-    line-height: 1.4;
-  }
-
-  .modal-btns {
-    display: flex;
-    gap: 10px;
-  }
-
-  .modal-btns button {
-    flex: 1;
-    padding: 12px;
-    border: none;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .modal-cancel {
-    background: #f0f0f0;
-    color: #555;
-  }
-
-  .modal-confirm {
-    background: #e53935;
-    color: white;
-  }
-
-  .modal-cancel:hover { background: #e0e0e0; }
-  .modal-confirm:hover { background: #c62828; }
-
-  .empty { color: #bbb; font-style: italic; font-size: 0.8rem; }
-
-  /* ── Quick actions: horizontal scroll, no wrap ── */
   .quick-actions {
-    padding: 6px 10px;
-    background: white;
-    display: flex;
-    gap: 6px;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    max-width: 100%;
-    flex-shrink: 0;
+    padding: 8px 24px;
   }
-
-  .quick-actions::-webkit-scrollbar { display: none; }
 
   .quick-btn {
-    padding: 5px 10px;
-    background: #f5f4f0;
-    border: 1px solid #e8e6e1;
-    border-radius: 16px;
-    font-size: 0.7rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-    flex-shrink: 0;
+    font-size: 0.75rem;
+    padding: 6px 12px;
   }
 
-  .quick-btn:hover {
-    background: #e8f5e9;
-    border-color: #4CAF50;
-  }
-
-  /* ── Chat input bar: must fit in one line on 375px ── */
   .chat-input {
-    padding: 8px 8px;
-    padding-bottom: max(8px, env(safe-area-inset-bottom));
-    background: white;
-    border-top: 1px solid #e8e6e1;
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    max-width: 100%;
-    overflow: hidden;
-    flex-shrink: 0;
+    padding: 10px 12px;
   }
 
-  .photo-btn {
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 50%;
-    transition: background 0.2s;
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
+  .chat-input input[type="text"] {
+    padding: 12px 16px;
+    font-size: 0.9rem;
   }
-
-  .photo-btn:hover { background: #e8f5e9; }
-
-  .chat-input input {
-    flex: 1;
-    min-width: 0;
-    padding: 10px 14px;
-    border: 1px solid #ddd;
-    border-radius: 24px;
-    font-size: 0.85rem;
-    outline: none;
-    transition: border-color 0.2s;
-    max-width: 100%;
-  }
-
-  .chat-input input:focus {
-    border-color: #4CAF50;
-  }
-
-  /* Send button: arrow on mobile, text on desktop */
-  .chat-input button {
-    padding: 10px 14px;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-
-  .chat-input button:hover { background: #43A047; }
-  .chat-input button:disabled { background: #ccc; cursor: not-allowed; }
-
-  /* ==============================================
-     DESKTOP LAYOUT: side-by-side at 768px+
-     ============================================== */
-  @media (min-width: 768px) {
-    body {
-      flex-direction: row;
-    }
-
-    .dashboard {
-      width: 340px;
-      max-height: none;
-      height: 100vh;
-      height: 100dvh;
-      border-bottom: none;
-      border-right: 1px solid #e8e6e1;
-      padding: 20px;
-      flex-shrink: 0;
-      overflow-y: auto;
-    }
-
-    /* On desktop the dashboard is always visible, never toggled */
-    .dashboard.open {
-      max-height: none;
-    }
-
-    .dash-toggle {
-      display: none;
-    }
-
-    .chat-header {
-      padding: 16px 24px;
-      font-size: 1rem;
-    }
-
-    .chat-messages {
-      padding: 20px 24px;
-    }
-
-    .msg {
-      max-width: 75%;
-      font-size: 0.9rem;
-      padding: 12px 16px;
-    }
-
-    .msg.user {
-      max-width: 70%;
-      word-break: break-word;
-    }
-
-    .msg.coach {
-      max-width: 85%;
-      word-break: break-word;
-    }
-
-    .meal-card {
-      max-width: 420px;
-    }
-
-    .meal-card {
-      max-width: 400px;
-      width: calc(100% - 24px);
-    }
-
-    .meal-card-header { padding: 16px 20px 8px; }
-    .meal-card-items { padding: 0 20px 12px; }
-    .meal-card-divider { margin: 0 20px; }
-    .meal-card-calories { padding: 16px 20px; }
-    .meal-card-macros { padding: 8px 16px 20px; }
-    .meal-card-progress { padding: 12px 20px; }
-    .meal-card-tip { padding: 14px 20px; }
-    .meal-card-actions { padding: 12px 20px; }
-
-    .macro-circle .ring {
-      width: 52px;
-      height: 52px;
-      font-size: 0.85rem;
-    }
-
-    .macro-circle .ring-label { font-size: 0.7rem; }
-
-    .quick-actions {
-      padding: 8px 24px;
-    }
-
-    .quick-btn {
-      font-size: 0.75rem;
-      padding: 6px 12px;
-    }
-
-    .chat-input {
-      padding: 10px 12px;
-    }
-
-    .chat-input input {
-      padding: 12px 16px;
-      font-size: 0.9rem;
-    }
-  }
+}
 </style>
 </head>
 <body>
 
-<!-- ── DASHBOARD ──────────────────── -->
-<div class="dashboard" id="dashboard">
-  <h1>Rachida</h1>
-  <div class="date" id="dateLabel"></div>
+<div class="app">
 
-  <!-- 1. Weight + body comp + sparkline -->
-  <div class="card" id="weightCard" style="display:none">
-    <h2>⚖️ Poids</h2>
-    <div class="weight-big"><span id="weightValue">—</span> <span>kg</span></div>
-    <div id="bodyComp" style="font-size:0.75rem;color:#888;margin-top:6px;line-height:1.6"></div>
-    <div id="weightSparkline" style="margin-top:8px"></div>
+  <!-- ============================================================
+       PANEL: DASHBOARD (Tab 2 on mobile, sidebar on desktop)
+       ============================================================ -->
+  <div class="tab-panel" id="panelDashboard">
+    <div class="sidebar-scroll" id="dashboardScroll">
+      <h1>Rachida</h1>
+
+      <!-- Day navigation -->
+      <div class="dash-day-nav">
+        <button class="dash-day-btn" onclick="changeDashDay(-1)">&lsaquo;</button>
+        <span class="dash-day-label" id="dateLabel"></span>
+        <button class="dash-day-btn" id="dashNextBtn" onclick="changeDashDay(1)">&rsaquo;</button>
+      </div>
+
+      <!-- 1. Weight + body comp + sparkline -->
+      <div class="card" id="weightCard" style="display:none">
+        <h2>&#9878;&#65039; Poids</h2>
+        <div class="weight-big"><span id="weightValue">&mdash;</span> <span>kg</span></div>
+        <div id="bodyComp" style="font-size:0.75rem;color:#888;margin-top:6px;line-height:1.6"></div>
+        <div id="weightSparkline" style="margin-top:8px"></div>
+      </div>
+
+      <!-- 2. Activity -->
+      <div class="card" id="activityCard" style="display:none">
+        <h2>&#128694;&#8205;&#9792;&#65039; Activite <span id="activityLabel" style="font-weight:400;font-size:0.65rem;color:#aaa"></span></h2>
+        <div id="activityData" style="font-size:0.85rem"></div>
+      </div>
+
+      <!-- 3. Macros -->
+      <div class="card">
+        <h2>&#127919; Macros du jour</h2>
+        <div class="macro-row"><span>Calories</span><span id="calLabel">0 / 0 kcal</span></div>
+        <div class="macro-bar"><div class="macro-fill cal" id="calBar" style="width:0%">0%</div></div>
+        <div class="macro-row"><span>Proteines</span><span id="protLabel">0 / 0g</span></div>
+        <div class="macro-bar"><div class="macro-fill prot" id="protBar" style="width:0%">0%</div></div>
+        <div class="macro-row"><span>Lipides</span><span id="fatLabel">0 / 0g</span></div>
+        <div class="macro-bar"><div class="macro-fill fat" id="fatBar" style="width:0%">0%</div></div>
+        <div class="macro-row"><span>Glucides</span><span id="carbsLabel">0 / 0g</span></div>
+        <div class="macro-bar"><div class="macro-fill carbs" id="carbsBar" style="width:0%">0%</div></div>
+      </div>
+
+      <!-- 4. Meals with 7-day nav -->
+      <div class="card">
+        <h2>&#127869;&#65039; Repas <span id="mealDate" style="font-weight:400;color:#999;font-size:0.7rem"></span></h2>
+        <div class="day-nav" id="dayNav"></div>
+        <div id="mealsList"><span class="empty">Aucun repas enregistre</span></div>
+      </div>
+
+      <!-- 5. Micronutrients (collapsible) -->
+      <div class="card" id="microsCard" style="display:none">
+        <h2 style="cursor:pointer" onclick="document.getElementById('microsBody').style.display = document.getElementById('microsBody').style.display === 'none' ? '' : 'none'">&#128300; Micronutriments &#9662;</h2>
+        <div id="microsBody"></div>
+      </div>
+
+      <!-- 6. Supplements (visible in sidebar on desktop, also in supplements tab on mobile) -->
+      <div class="card" id="sidebarSupps">
+        <h2>&#128138; Complements</h2>
+        <div id="suppsList"></div>
+      </div>
+
+      <!-- 7. Medications -->
+      <div class="card">
+        <h2>&#128138; Medicaments</h2>
+        <div id="medsList"><span class="empty">Aucun medicament</span></div>
+      </div>
+    </div>
   </div>
 
-  <!-- 2. Activity today + 30-day bar chart -->
-  <div class="card" id="activityCard" style="display:none">
-    <h2>🚶‍♀️ Activité <span id="activityLabel" style="font-weight:400;font-size:0.65rem;color:#aaa"></span></h2>
-    <div id="activityData" style="font-size:0.85rem"></div>
+  <!-- ============================================================
+       PANEL: CHAT (Tab 1 on mobile, right side on desktop)
+       ============================================================ -->
+  <div class="tab-panel active" id="panelChat">
+    <div class="chat-area">
+      <div class="chat-header">&#128172; Coach Rachida</div>
+
+      <div class="chat-messages" id="messages">
+        <div class="msg system" id="welcomeMsg">Salut Rachida ! &#128522;</div>
+      </div>
+
+      <div class="quick-actions">
+        <button class="quick-btn" onclick="sendQuick('brief du matin')">&#9728;&#65039; Brief</button>
+        <button class="quick-btn" onclick="sendQuick('qu\'est-ce que je peux manger ce soir ?')">&#127869;&#65039; Diner</button>
+        <button class="quick-btn" onclick="sendQuick('combien de calories il me reste ?')">&#128202; Reste</button>
+        <button class="quick-btn" onclick="sendQuick('un snack sain ?')">&#129372; Snack</button>
+        <button class="quick-btn" onclick="sendQuick('mes complements ?')">&#128138; Complements</button>
+        <button class="quick-btn" onclick="loadWeekly()">&#128200; Semaine</button>
+      </div>
+
+      <div class="chat-input">
+        <label class="photo-btn" title="Prends en photo ton plat">
+          &#128248;
+          <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="sendPhoto(this)">
+        </label>
+        <input type="text" id="chatInput" placeholder="Dis quelque chose a ton coach..." autocomplete="off">
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">Envoyer</button>
+      </div>
+    </div>
   </div>
 
-  <!-- 3. Macros progress bars -->
-  <div class="card">
-    <h2>🎯 Macros du jour</h2>
-    <div class="macro-row"><span>Calories</span><span id="calLabel">0 / 0 kcal</span></div>
-    <div class="macro-bar"><div class="macro-fill cal" id="calBar" style="width:0%">0%</div></div>
-    <div class="macro-row"><span>Proteines</span><span id="protLabel">0 / 0g</span></div>
-    <div class="macro-bar"><div class="macro-fill prot" id="protBar" style="width:0%">0%</div></div>
-    <div class="macro-row"><span>Lipides</span><span id="fatLabel">0 / 0g</span></div>
-    <div class="macro-bar"><div class="macro-fill fat" id="fatBar" style="width:0%">0%</div></div>
-    <div class="macro-row"><span>Glucides</span><span id="carbsLabel">0 / 0g</span></div>
-    <div class="macro-bar"><div class="macro-fill carbs" id="carbsBar" style="width:0%">0%</div></div>
+  <!-- ============================================================
+       PANEL: SUPPLEMENTS (Tab 3 on mobile only)
+       ============================================================ -->
+  <div class="tab-panel" id="panelSupplements">
+    <div class="sidebar-scroll">
+      <h1 style="margin-bottom:16px">&#128138; Complements &amp; Medicaments</h1>
+      <div class="card">
+        <h2>&#128138; Complements</h2>
+        <div id="suppsListMobile"></div>
+      </div>
+      <div class="card">
+        <h2>&#128138; Medicaments</h2>
+        <div id="medsListMobile"><span class="empty">Aucun medicament</span></div>
+      </div>
+    </div>
   </div>
 
-  <!-- 4. Meals with 7-day nav + delete -->
-  <div class="card">
-    <h2>🍽️ Repas <span id="mealDate" style="font-weight:400;color:#999;font-size:0.7rem"></span></h2>
-    <div class="day-nav" id="dayNav"></div>
-    <div id="mealsList"><span class="empty">Aucun repas enregistre</span></div>
+  <!-- ============================================================
+       BOTTOM TAB BAR (mobile only)
+       ============================================================ -->
+  <div class="tab-bar" id="tabBar">
+    <button class="tab-bar-btn active" data-tab="panelChat" onclick="switchTab('panelChat')">
+      <span class="tab-icon">&#128172;</span>
+      Chat
+    </button>
+    <button class="tab-bar-btn" data-tab="panelDashboard" onclick="switchTab('panelDashboard')">
+      <span class="tab-icon">&#128202;</span>
+      Dashboard
+    </button>
+    <button class="tab-bar-btn" data-tab="panelSupplements" onclick="switchTab('panelSupplements')">
+      <span class="tab-icon">&#128138;</span>
+      Complements
+    </button>
   </div>
 
-  <!-- 5. Micronutrients (collapsible) -->
-  <div class="card" id="microsCard" style="display:none">
-    <h2 style="cursor:pointer" onclick="document.getElementById('microsBody').style.display = document.getElementById('microsBody').style.display === 'none' ? '' : 'none'">🔬 Micronutriments ▾</h2>
-    <div id="microsBody"></div>
-  </div>
+</div><!-- /app -->
 
-  <!-- 6. Supplements with checkboxes -->
-  <div class="card">
-    <h2>💊 Complements</h2>
-    <div id="suppsList"></div>
-  </div>
-
-  <!-- 7. Medications -->
-  <div class="card">
-    <h2>💊 Medicaments</h2>
-    <div id="medsList"><span class="empty">Aucun medicament</span></div>
-  </div>
-</div>
-
-<!-- ── CHAT ───────────────────────── -->
-<div class="chat-area">
-  <div class="chat-header">
-    <span class="dash-toggle" onclick="document.getElementById('dashboard').classList.toggle('open')">📊</span>
-    💬 Coach Rachida
-  </div>
-
-  <div class="chat-messages" id="messages">
-    <div class="msg system" id="welcomeMsg">Salut Rachida ! 😊</div>
-  </div>
-
-  <div class="quick-actions" style="overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none">
-    <button class="quick-btn" onclick="sendQuick('brief du matin')">☀️ Brief</button>
-    <button class="quick-btn" onclick="sendQuick('qu\'est-ce que je peux manger ce soir ?')">🍽️ Dîner</button>
-    <button class="quick-btn" onclick="sendQuick('combien de calories il me reste ?')">📊 Reste</button>
-    <button class="quick-btn" onclick="sendQuick('un snack sain ?')">🥜 Snack</button>
-    <button class="quick-btn" onclick="sendQuick('mes compléments ?')">💊 Compléments</button>
-    <button class="quick-btn" onclick="loadWeekly()">📈 Semaine</button>
-  </div>
-
-  <div class="chat-input">
-    <label class="photo-btn" title="Prends en photo ton plat">
-      📸
-      <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="sendPhoto(this)">
-    </label>
-    <input type="text" id="chatInput" placeholder="Dis quelque chose à ton coach..." autocomplete="off">
-    <button id="sendBtn" onclick="sendMessage()">Envoyer</button>
-  </div>
-</div>
-
+<!-- ============================================================
+     JAVASCRIPT — All logic preserved
+     ============================================================ -->
 <script>
+/* ==========================================================
+   TAB SWITCHING (mobile only)
+   ========================================================== */
+function switchTab(tabId) {
+  // On desktop, ignore tab switching
+  if (window.innerWidth >= 768) return;
+
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-bar-btn').forEach(b => b.classList.remove('active'));
+
+  document.getElementById(tabId).classList.add('active');
+  document.querySelector(`.tab-bar-btn[data-tab="${tabId}"]`).classList.add('active');
+}
+
+// Handle resize: ensure desktop layout is correct
+window.addEventListener('resize', () => {
+  if (window.innerWidth >= 768) {
+    // On desktop, dashboard and chat always visible
+    document.getElementById('panelDashboard').classList.add('active');
+    document.getElementById('panelChat').classList.add('active');
+    document.getElementById('panelSupplements').classList.remove('active');
+  }
+});
+
+// Set initial state based on viewport
+if (window.innerWidth >= 768) {
+  document.getElementById('panelDashboard').classList.add('active');
+}
+
+/* ==========================================================
+   DOM REFERENCES
+   ========================================================== */
 const messagesEl = document.getElementById('messages');
 const inputEl = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
 
-// ── Load dashboard on start ──────
-async function loadDashboard() {
+/* ==========================================================
+   DASHBOARD
+   ========================================================== */
+async function loadDashboard(date) {
   try {
-    const res = await fetch('/api/dashboard');
+    const url = date ? `/api/dashboard?date=${date}` : '/api/dashboard';
+    const res = await fetch(url);
     const data = await res.json();
     updateDashboard(data);
   } catch (e) {
@@ -928,11 +1077,11 @@ async function loadDashboard() {
 
 function updateDashboard(d) {
   const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-  const now = new Date();
+  const now = dashDate === new Date().toISOString().split('T')[0] ? new Date() : new Date(dashDate + 'T12:00');
   document.getElementById('dateLabel').textContent =
     `${days[now.getDay()]} ${now.toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})}`;
 
-  // ── 1. Weight + body composition + sparkline ──
+  // -- 1. Weight + body composition + sparkline --
   if (d.weight) {
     document.getElementById('weightCard').style.display = '';
     document.getElementById('weightValue').textContent = d.weight.weight_kg;
@@ -943,7 +1092,6 @@ function updateDashboard(d) {
     if (d.weight.bone_mass_kg) comp += `Os ${d.weight.bone_mass_kg}kg`;
     document.getElementById('bodyComp').textContent = comp.replace(/ \u00b7 $/, '');
 
-    // Weight sparkline (inline SVG, 30 days)
     const sparkEl = document.getElementById('weightSparkline');
     if (d.weightHistory && d.weightHistory.length > 1) {
       const pts = d.weightHistory.map(h => h.weight_kg);
@@ -972,7 +1120,7 @@ function updateDashboard(d) {
     }
   }
 
-  // ── 2. Activity today + 30-day bar chart ──
+  // -- 2. Activity today + 30-day bar chart --
   if (d.activity || (d.weekActivity && d.weekActivity.length > 0)) {
     document.getElementById('activityCard').style.display = '';
     let html = '';
@@ -989,7 +1137,6 @@ function updateDashboard(d) {
         ${dist}
       </div>`;
     } else if (d.weekActivity && d.weekActivity.length > 0) {
-      // Show yesterday's data when today is empty
       const yesterday = d.weekActivity[d.weekActivity.length - 1];
       if (yesterday && yesterday.steps > 0) {
         document.getElementById('activityLabel').textContent = "hier";
@@ -1002,7 +1149,7 @@ function updateDashboard(d) {
 
     // Manual activity input button
     html += `<div style="text-align:center;margin:8px 0 4px">
-      <button onclick="showActivityInput()" style="background:none;border:1px solid #ddd;border-radius:16px;padding:5px 14px;font-size:0.7rem;color:#888;cursor:pointer">+ Ajouter activité</button>
+      <button onclick="showActivityInput()" style="background:none;border:1px solid #ddd;border-radius:16px;padding:5px 14px;font-size:0.7rem;color:#888;cursor:pointer">+ Ajouter activite</button>
     </div>`;
 
     if (d.weekActivity && d.weekActivity.length > 0) {
@@ -1027,7 +1174,7 @@ function updateDashboard(d) {
     document.getElementById('activityData').innerHTML = html;
   }
 
-  // ── 3. Macros ──
+  // -- 3. Macros --
   const c = d.consumed, t = d.targets;
   document.getElementById('calLabel').textContent = `${Math.round(c.calories)} / ${t.calories_target} kcal`;
   document.getElementById('protLabel').textContent = `${Math.round(c.protein_g)} / ${t.protein_target_g}g`;
@@ -1039,10 +1186,10 @@ function updateDashboard(d) {
   setBar('fatBar', d.fatPct, 'fat');
   setBar('carbsBar', d.carbsPct, 'carbs');
 
-  // ── 4. Meals ──
+  // -- 4. Meals --
   renderMeals(d.meals);
 
-  // ── 5. Supplements with checkboxes grouped by timing ──
+  // -- 5. Supplements with checkboxes grouped by timing --
   const suppsEl = document.getElementById('suppsList');
   if (d.supplements && d.supplements.length > 0) {
     const groups = {
@@ -1069,9 +1216,11 @@ function updateDashboard(d) {
       });
     }
     suppsEl.innerHTML = html;
+    // Mirror to mobile supplements tab
+    document.getElementById('suppsListMobile').innerHTML = html.replace(/toggleSupp\(/g, 'toggleSupp(');
   }
 
-  // ── 6. Medications ──
+  // -- 6. Medications --
   const medsEl = document.getElementById('medsList');
   if (!d.medications || d.medications.length === 0) {
     medsEl.innerHTML = '<span class="empty">Aucun m\u00e9dicament</span>';
@@ -1080,6 +1229,8 @@ function updateDashboard(d) {
       `<div class="med-item">\uD83D\uDC8A ${m.name}${m.dose ? ' \u2014 '+m.dose : ''}</div>`
     ).join('');
   }
+  // Mirror medications to mobile tab
+  document.getElementById('medsListMobile').innerHTML = medsEl.innerHTML;
 }
 
 function setBar(id, pct, cls) {
@@ -1090,7 +1241,9 @@ function setBar(id, pct, cls) {
   el.className = 'macro-fill ' + cls + (pct > 100 ? ' over' : '');
 }
 
-// ── Chat ─────────────────────────
+/* ==========================================================
+   CHAT
+   ========================================================== */
 async function sendMessage() {
   const msg = inputEl.value.trim();
   if (!msg) return;
@@ -1132,8 +1285,8 @@ function sendQuick(text) {
 }
 
 function addMessage(text, type) {
-  // Try to render meal responses as rich cards
-  if (type === 'coach' && text.includes('enregistré') && text.includes('kcal |')) {
+  // Render meal responses as rich cards
+  if (type === 'coach' && text.includes('enregistr\u00e9') && text.includes('kcal |')) {
     return addMealCard(text);
   }
 
@@ -1148,17 +1301,14 @@ function addMessage(text, type) {
 function addMealCard(text) {
   const lines = text.trim().split('\n').filter(l => l.trim());
 
-  // Parse header
-  const headerLine = lines.find(l => l.includes('enregistré')) || 'Repas enregistré';
+  const headerLine = lines.find(l => l.includes('enregistr\u00e9')) || 'Repas enregistr\u00e9';
 
-  // Parse food items (lines with "kcal |")
   const items = lines.filter(l => l.includes('kcal |') && !l.includes('Total')).map(l => {
     const match = l.match(/^(.+?)\s+\((\d+)g\)\s+(\d+)\s*kcal\s*\|\s*P:\s*([\d.]+)g\s*\|\s*L:\s*([\d.]+)g\s*\|\s*G:\s*([\d.]+)g/);
     if (match) return { name: match[1].trim(), qty: match[2], cal: match[3], p: match[4], l: match[5], g: match[6] };
     return null;
   }).filter(Boolean);
 
-  // Parse total
   const totalLine = lines.find(l => l.includes('Total'));
   const totalMatch = totalLine?.match(/(\d+)\s*kcal\s*\|\s*P:\s*([\d.]+)g\s*\|\s*L:\s*([\d.]+)g\s*\|\s*G:\s*([\d.]+)g/);
 
@@ -1167,23 +1317,20 @@ function addMealCard(text) {
   const totalL = totalMatch ? totalMatch[3] : '0';
   const totalG = totalMatch ? totalMatch[4] : '0';
 
-  // Parse progress
-  const calLine = lines.find(l => l.includes('Consommé'));
+  const calLine = lines.find(l => l.includes('Consomm\u00e9'));
   const resteLine = lines.find(l => l.includes('Il te reste'));
 
-  // Parse tip
   const tipIdx = lines.findIndex(l => l.includes('Prochain repas'));
-  const tipLine = tipIdx >= 0 ? lines[tipIdx].replace('💡 ', '').replace('Prochain repas : ', '') : '';
+  const tipLine = tipIdx >= 0 ? lines[tipIdx].replace('\uD83D\uDCA1 ', '').replace('Prochain repas : ', '') : '';
   const whyLine = lines[tipIdx + 1]?.replace('Pourquoi : ', '').trim() || '';
 
-  // Items description
   const itemsDesc = items.map(i => `${i.name} (${i.qty}g)`).join(', ');
 
   const card = document.createElement('div');
   card.className = 'meal-card';
 
   card.innerHTML = `
-    <div class="meal-card-header">${headerLine.replace(/[🌅🍽️🌙🫐]/g, '').replace('enregistré', '').trim() || 'Repas'}</div>
+    <div class="meal-card-header">${headerLine.replace(/[\uD83C\uDF05\uD83C\uDF7D\uFE0F\uD83C\uDF19\uD83E\uDED0]/gu, '').replace('enregistr\u00e9', '').trim() || 'Repas'}</div>
     <div class="meal-card-items">${itemsDesc}</div>
     <div class="meal-card-divider"></div>
     <div class="meal-card-calories">
@@ -1197,7 +1344,7 @@ function addMealCard(text) {
       </div>
       <div class="macro-circle">
         <div class="ring prot">${totalP}<div class="ring-sub">g</div></div>
-        <span class="ring-label">Protéines</span>
+        <span class="ring-label">Prot\u00e9ines</span>
       </div>
       <div class="macro-circle">
         <div class="ring carbs">${totalG}<div class="ring-sub">g</div></div>
@@ -1205,14 +1352,14 @@ function addMealCard(text) {
       </div>
     </div>
     <div class="meal-card-progress">
-      ${calLine ? `<div class="pline"><span>${calLine.replace('📊 ', '').trim()}</span></div>` : ''}
+      ${calLine ? `<div class="pline"><span>${calLine.replace('\uD83D\uDCCA ', '').trim()}</span></div>` : ''}
       ${resteLine ? `<div class="pline"><strong>${resteLine.trim()}</strong></div>` : ''}
     </div>
     ${tipLine ? `<div class="meal-card-tip">
-      <strong>💡 ${tipLine}</strong><br>${whyLine}
+      <strong>\uD83D\uDCA1 ${tipLine}</strong><br>${whyLine}
     </div>` : ''}
     <div class="meal-card-actions">
-      <button class="btn-correct" onclick="correctMeal(this)">✏️ Corriger les résultats</button>
+      <button class="btn-correct" onclick="correctMeal(this)">\u270F\uFE0F Corriger les r\u00e9sultats</button>
     </div>
   `;
 
@@ -1225,9 +1372,9 @@ function correctMeal(btn) {
   const card = btn.closest('.meal-card');
   const actions = card.querySelector('.meal-card-actions');
   actions.innerHTML = `
-    <input type="text" id="correctionInput" placeholder="Ex: c'est des œufs pochés, pas de la fêta"
+    <input type="text" id="correctionInput" placeholder="Ex: c'est des oeufs poch\u00e9s, pas de la f\u00eata"
       style="width:100%;padding:12px;border:1px solid #ddd;border-radius:12px;font-size:0.85rem;outline:none;margin-bottom:8px">
-    <button class="btn-save" onclick="sendCorrection(this)" style="width:100%">✅ Recalculer</button>
+    <button class="btn-save" onclick="sendCorrection(this)" style="width:100%">\u2705 Recalculer</button>
   `;
   document.getElementById('correctionInput').focus();
   document.getElementById('correctionInput').addEventListener('keydown', (e) => {
@@ -1241,23 +1388,18 @@ async function sendCorrection(btn) {
   const correction = input.value.trim();
   if (!correction) return;
 
-  // Get the original items from the card
   const originalItems = card.querySelector('.meal-card-items')?.textContent || '';
   const originalTitle = card.querySelector('.meal-card-header')?.textContent || '';
 
-  card.querySelector('.meal-card-actions').innerHTML = '<div style="text-align:center;color:#888;font-size:0.8rem;padding:12px">⏳ Recalcul en cours...</div>';
+  card.querySelector('.meal-card-actions').innerHTML = '<div style="text-align:center;color:#888;font-size:0.8rem;padding:12px">\u23F3 Recalcul en cours...</div>';
 
   try {
-    // Delete the last meal from DB, then re-log with correction
     await fetch('/api/meal/last', { method: 'DELETE' });
-
-    const hour = new Date().getHours();
-    const mealType = hour < 11 ? 'breakfast' : hour < 15 ? 'lunch' : hour < 18 ? 'snack' : 'dinner';
 
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: `j'ai mangé : ${originalItems}. Correction : ${correction}. Recalcule avec cette correction.` })
+      body: JSON.stringify({ message: `j'ai mang\u00e9 : ${originalItems}. Correction : ${correction}. Recalcule avec cette correction.` })
     });
     const data = await res.json();
 
@@ -1266,63 +1408,25 @@ async function sendCorrection(btn) {
     if (data.dashboard) updateDashboard(data.dashboard);
   } catch(e) {
     card.querySelector('.meal-card-actions').innerHTML = `
-      <button class="btn-save-meal" onclick="this.textContent='✅ Enregistré !';this.disabled=true">Enregistrer ce repas</button>
-      <button class="btn-correct" onclick="correctMeal(this)">Corriger les résultats</button>
+      <button class="btn-save-meal" onclick="this.textContent='\u2705 Enregistr\u00e9 !';this.disabled=true">Enregistrer ce repas</button>
+      <button class="btn-correct" onclick="correctMeal(this)">Corriger les r\u00e9sultats</button>
     `;
   }
 }
 
-inputEl.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
-});
-
-let selectedDate = new Date().toISOString().split('T')[0];
-
-function showActivityInput() {
-  const card = document.getElementById('activityData');
-  const btn = card.querySelector('button[onclick="showActivityInput()"]');
-  if (!btn) return;
-  btn.outerHTML = `<div style="padding:8px;background:#f8f8f6;border-radius:12px;margin:8px 0">
-    <div style="display:flex;gap:6px;margin-bottom:6px">
-      <input type="number" id="inputSteps" placeholder="Pas" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:0.8rem">
-      <input type="number" id="inputCal" placeholder="Kcal" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:0.8rem">
-      <input type="number" id="inputMin" placeholder="Min" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:0.8rem">
-    </div>
-    <button onclick="saveActivity()" style="width:100%;padding:8px;background:#4CAF50;color:white;border:none;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer">Enregistrer</button>
-  </div>`;
-  document.getElementById('inputSteps').focus();
-}
-
-async function saveActivity() {
-  const steps = parseInt(document.getElementById('inputSteps').value) || 0;
-  const cal = parseInt(document.getElementById('inputCal').value) || 0;
-  const min = parseInt(document.getElementById('inputMin').value) || 0;
-  if (steps === 0 && cal === 0 && min === 0) return;
-
-  try {
-    await fetch('/api/activity', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ steps, active_calories: cal, exercise_minutes: min })
-    });
-    loadDashboard();
-  } catch(e) {}
-}
-
+/* ==========================================================
+   PHOTO
+   ========================================================== */
 async function sendPhoto(input) {
   const file = input.files[0];
   if (!file) return;
-  input.value = ''; // reset for next use
+  input.value = '';
 
-  addMessage('📸 Photo envoyée — analyse en cours...', 'user');
+  addMessage('\uD83D\uDCF8 Photo envoy\u00e9e \u2014 analyse en cours...', 'user');
   const loadingEl = addMessage('Je regarde ton plat...', 'loading');
   sendBtn.disabled = true;
 
   try {
-    // Compress image to max 800px and convert to base64 JPEG
     const base64 = await new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
@@ -1344,7 +1448,7 @@ async function sendPhoto(input) {
     const res = await fetch('/api/meal-photo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: base64, message: chatInput.value.trim() || '' })
+      body: JSON.stringify({ image: base64, message: inputEl.value.trim() || '' })
     });
 
     const data = await res.json();
@@ -1365,27 +1469,33 @@ async function sendPhoto(input) {
   inputEl.focus();
 }
 
+/* ==========================================================
+   MEALS
+   ========================================================== */
 function renderMeals(meals) {
   const mealsEl = document.getElementById('mealsList');
   if (!meals || meals.length === 0) {
-    mealsEl.innerHTML = '<span class="empty">Aucun repas enregistré</span>';
+    mealsEl.innerHTML = '<span class="empty">Aucun repas enregistr\u00e9</span>';
     return;
   }
-  const typeNames = {breakfast:'Petit-déj',lunch:'Déjeuner',dinner:'Dîner',snack:'Collation'};
-  const typeEmojis = {breakfast:'🌅',lunch:'🍽️',dinner:'🌙',snack:'🫐'};
+  const typeNames = {breakfast:'Petit-d\u00e9j',lunch:'D\u00e9jeuner',dinner:'D\u00eener',snack:'Collation'};
+  const typeEmojis = {breakfast:'\uD83C\uDF05',lunch:'\uD83C\uDF7D\uFE0F',dinner:'\uD83C\uDF19',snack:'\uD83E\uDED0'};
   mealsEl.innerHTML = meals.map(m => {
     const title = typeNames[m.meal_type] || m.meal_type;
-    const emoji = typeEmojis[m.meal_type] || '🍴';
+    const emoji = typeEmojis[m.meal_type] || '\uD83C\uDF74';
     const desc = m.description.length > 35 ? m.description.substring(0,35) + '...' : m.description;
-    return `<div class="meal-item" style="flex-direction:column;align-items:stretch;gap:2px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
+    return `<div class="meal-item">
+      <div class="meal-item-row">
         <strong>${emoji} ${title}</strong>
-        <span>${Math.round(m.calories)} kcal <span class="meal-actions"><button class="meal-del" onclick="deleteMeal(${m.id})">🗑️</button></span></span>
+        <span>${Math.round(m.calories)} kcal <span class="meal-actions"><button class="meal-del" onclick="deleteMeal(${m.id})">\uD83D\uDDD1\uFE0F</button></span></span>
       </div>
-      <div style="font-size:0.72rem;color:#999">${desc}</div>
+      <div class="meal-desc">${desc}</div>
     </div>`;
   }).join('');
 }
+
+let selectedDate = new Date().toISOString().split('T')[0];
+let dashDate = new Date().toISOString().split('T')[0];
 
 function buildDayNav() {
   const nav = document.getElementById('dayNav');
@@ -1413,6 +1523,23 @@ async function loadDay(date) {
   } catch(e) {}
 }
 
+function changeDashDay(delta) {
+  const d = new Date(dashDate + 'T12:00');
+  d.setDate(d.getDate() + delta);
+  const today = new Date().toISOString().split('T')[0];
+  const newDate = d.toISOString().split('T')[0];
+  if (newDate > today) return;
+  dashDate = newDate;
+  document.getElementById('dashNextBtn').style.opacity = dashDate === today ? '0.3' : '1';
+  loadDashboard(dashDate);
+  loadMicros(dashDate);
+  selectedDate = dashDate;
+  buildDayNav();
+}
+
+/* ==========================================================
+   DELETE MEAL + MODAL
+   ========================================================== */
 function showModal(message, onConfirm) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -1440,6 +1567,9 @@ async function deleteMeal(id) {
   });
 }
 
+/* ==========================================================
+   MICRONUTRIENTS
+   ========================================================== */
 async function loadMicros(date) {
   try {
     const res = await fetch('/api/micros?date=' + (date || selectedDate));
@@ -1453,9 +1583,9 @@ async function loadMicros(date) {
 
     card.style.display = '';
     const labels = {
-      iron_mg: 'Fer', zinc_mg: 'Zinc', calcium_mg: 'Calcium', magnesium_mg: 'Magnésium',
+      iron_mg: 'Fer', zinc_mg: 'Zinc', calcium_mg: 'Calcium', magnesium_mg: 'Magn\u00e9sium',
       potassium_mg: 'Potassium', vit_a_mcg: 'Vit A', vit_c_mg: 'Vit C', vit_d_ui: 'Vit D',
-      vit_b12_mcg: 'Vit B12', vit_b9_mcg: 'Folate B9', selenium_mcg: 'Sélénium'
+      vit_b12_mcg: 'Vit B12', vit_b9_mcg: 'Folate B9', selenium_mcg: 'S\u00e9l\u00e9nium'
     };
 
     let html = '';
@@ -1476,6 +1606,9 @@ async function loadMicros(date) {
   } catch(e) {}
 }
 
+/* ==========================================================
+   SUPPLEMENTS
+   ========================================================== */
 async function toggleSupp(id, checkbox) {
   try {
     const res = await fetch('/api/supplement/toggle', {
@@ -1484,7 +1617,6 @@ async function toggleSupp(id, checkbox) {
       body: JSON.stringify({ supplement_id: id })
     });
     const data = await res.json();
-    // Update the label style
     const label = checkbox.closest('.supp-check');
     if (data.taken) {
       label.classList.add('taken');
@@ -1493,11 +1625,50 @@ async function toggleSupp(id, checkbox) {
     } else {
       label.classList.remove('taken');
     }
+    // Re-sync the other list (sidebar vs mobile tab)
+    loadDashboard(dashDate);
   } catch (e) {
-    checkbox.checked = !checkbox.checked; // revert on error
+    checkbox.checked = !checkbox.checked;
   }
 }
 
+/* ==========================================================
+   ACTIVITY INPUT
+   ========================================================== */
+function showActivityInput() {
+  const card = document.getElementById('activityData');
+  const btn = card.querySelector('button[onclick="showActivityInput()"]');
+  if (!btn) return;
+  btn.outerHTML = `<div style="padding:8px;background:#f8f8f6;border-radius:12px;margin:8px 0">
+    <div style="display:flex;gap:6px;margin-bottom:6px">
+      <input type="number" id="inputSteps" placeholder="Pas" style="flex:1;min-width:0;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:0.8rem">
+      <input type="number" id="inputCal" placeholder="Kcal" style="flex:1;min-width:0;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:0.8rem">
+      <input type="number" id="inputMin" placeholder="Min" style="flex:1;min-width:0;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:0.8rem">
+    </div>
+    <button onclick="saveActivity()" style="width:100%;padding:8px;background:#4CAF50;color:white;border:none;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer">Enregistrer</button>
+  </div>`;
+  document.getElementById('inputSteps').focus();
+}
+
+async function saveActivity() {
+  const steps = parseInt(document.getElementById('inputSteps').value) || 0;
+  const cal = parseInt(document.getElementById('inputCal').value) || 0;
+  const min = parseInt(document.getElementById('inputMin').value) || 0;
+  if (steps === 0 && cal === 0 && min === 0) return;
+
+  try {
+    await fetch('/api/activity', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ steps, active_calories: cal, exercise_minutes: min })
+    });
+    loadDashboard();
+  } catch(e) {}
+}
+
+/* ==========================================================
+   WEEKLY REVIEW
+   ========================================================== */
 async function loadWeekly() {
   addMessage('Bilan de la semaine...', 'system');
   const loadingEl = addMessage('...', 'loading');
@@ -1512,13 +1683,9 @@ async function loadWeekly() {
   }
 }
 
-// Init
-loadDashboard();
-buildDayNav();
-loadMicros();
-loadProactiveMessage();
-inputEl.focus();
-
+/* ==========================================================
+   PROACTIVE MESSAGE
+   ========================================================== */
 async function loadProactiveMessage() {
   try {
     const res = await fetch('/api/proactive');
@@ -1528,6 +1695,25 @@ async function loadProactiveMessage() {
     }
   } catch(e) {}
 }
+
+/* ==========================================================
+   KEYBOARD HANDLER
+   ========================================================== */
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+/* ==========================================================
+   INIT
+   ========================================================== */
+loadDashboard();
+buildDayNav();
+loadMicros();
+loadProactiveMessage();
+inputEl.focus();
 </script>
 </body>
 </html>
