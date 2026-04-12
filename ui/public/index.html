@@ -5,935 +5,176 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Rachida Health Coach</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        coach: { 50: '#e8f5e9', 100: '#c8e6c9', 500: '#4CAF50', 600: '#43A047', 700: '#388E3C' },
+        sand: { 50: '#fafaf8', 100: '#f5f4f0', 200: '#e8e6e1' }
+      }
+    }
+  }
+}
+</script>
 <style>
-/* ==========================================================
-   RESET & BASE — Mobile-first (375px base)
-   ========================================================== */
-*, *::before, *::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html, body {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-  height: 100vh;
-  height: 100dvh;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f5f4f0;
-  color: #2d2d2d;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* ==========================================================
-   MOBILE LAYOUT — Tab-based single column
-   ========================================================== */
-
-/* -- App shell -- */
-.app {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-/* -- Tab panels -- */
-.tab-panel {
-  display: none;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-  width: 100%;
-  max-width: 100%;
-}
-
-.tab-panel.active {
-  display: flex;
-}
-
-/* -- Bottom tab bar (mobile only) -- */
-.tab-bar {
-  display: flex;
-  background: white;
-  border-top: 1px solid #e8e6e1;
-  flex-shrink: 0;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.tab-bar-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 8px 4px 6px;
-  border: none;
-  background: none;
-  font-size: 0.65rem;
-  color: #999;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.tab-bar-btn .tab-icon {
-  font-size: 1.3rem;
-  line-height: 1;
-}
-
-.tab-bar-btn.active {
-  color: #4CAF50;
-}
-
-/* ==========================================================
-   SIDEBAR / DASHBOARD — scrollable content
-   ========================================================== */
-.sidebar-scroll {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  padding: 16px;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.sidebar-scroll h1 {
-  font-size: 1.2rem;
-  margin-bottom: 2px;
-}
-
-/* -- Day nav header -- */
-.dash-day-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.dash-day-btn {
-  background: none;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 1rem;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.dash-day-label {
-  font-size: 0.85rem;
-  color: #888;
-}
-
-/* -- Cards -- */
-.card {
-  background: #fafaf8;
-  border: 1px solid #eee;
-  border-radius: 10px;
-  padding: 14px;
-  margin-bottom: 12px;
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-.card h2 {
-  font-size: 0.75rem;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
-}
-
-/* -- Weight -- */
-.weight-big {
-  font-size: 2rem;
-  font-weight: 700;
-}
-
-.weight-big span {
-  font-size: 0.85rem;
-  color: #999;
-  font-weight: 400;
-}
-
-/* -- Macros -- */
-.macro-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.8rem;
-  color: #555;
-  margin-bottom: 4px;
-  min-width: 0;
-}
-
-.macro-row span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.macro-bar {
-  background: #eee;
-  border-radius: 6px;
-  height: 20px;
-  overflow: hidden;
-  margin-bottom: 8px;
-  width: 100%;
-}
-
-.macro-fill {
-  height: 100%;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  padding-left: 8px;
-  font-size: 0.7rem;
-  color: white;
-  font-weight: 600;
-  transition: width 0.4s ease;
-  min-width: 28px;
-}
-
-.cal  { background: linear-gradient(90deg, #4CAF50, #66BB6A); }
-.prot { background: linear-gradient(90deg, #2196F3, #42A5F5); }
-.fat  { background: linear-gradient(90deg, #FF9800, #FFB74D); }
-.carbs { background: linear-gradient(90deg, #9C27B0, #BA68C8); }
-.over { background: linear-gradient(90deg, #f44336, #e57373); }
-
-/* -- Meals list -- */
-.meal-item {
-  font-size: 0.8rem;
-  padding: 6px 0;
-  border-bottom: 1px solid #f0f0f0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  max-width: 100%;
-  word-break: break-word;
-}
-
-.meal-item:last-child { border: none; }
-
-.meal-item-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.meal-actions {
-  display: inline-flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.meal-del {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 0.7rem;
-  padding: 2px 6px;
-  border-radius: 4px;
-  color: #e57373;
-}
-
-.meal-del:hover { background: #fce4ec; }
-
-.meal-desc {
-  font-size: 0.72rem;
-  color: #999;
-}
-
-/* -- Day nav (7-day pills) -- */
-.day-nav {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 8px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  max-width: 100%;
-}
-
-.day-nav::-webkit-scrollbar { display: none; }
-
-.day-btn {
-  padding: 4px 8px;
-  border: 1px solid #e8e6e1;
-  border-radius: 8px;
-  font-size: 0.7rem;
-  cursor: pointer;
-  background: white;
-  white-space: nowrap;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.day-btn:hover { border-color: #4CAF50; }
-.day-btn.active { background: #4CAF50; color: white; border-color: #4CAF50; }
-
-/* -- Micronutrients -- */
-.micro-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  padding: 3px 0;
-  border-bottom: 1px solid #f8f8f8;
-  min-width: 0;
-  max-width: 100%;
-}
-
-.micro-row > span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.micro-row:last-child { border: none; }
-
-.micro-bar {
-  background: #eee;
-  border-radius: 4px;
-  height: 6px;
-  width: 60px;
-  overflow: hidden;
-  display: inline-block;
-  vertical-align: middle;
-  margin-left: 6px;
-  flex-shrink: 0;
-}
-
-.micro-fill {
-  height: 100%;
-  border-radius: 4px;
-  background: #66BB6A;
-  transition: width 0.3s;
-}
-
-.micro-fill.low  { background: #FF9800; }
-.micro-fill.good { background: #66BB6A; }
-.micro-fill.high { background: #42A5F5; }
-
-/* -- Supplements -- */
-.supp-group-title {
-  font-size: 0.7rem;
-  color: #999;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 8px;
-  margin-bottom: 4px;
-}
-
-.supp-group-title:first-child { margin-top: 0; }
-
-.supp-check {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 0;
-  cursor: pointer;
-  font-size: 0.8rem;
-  border-bottom: 1px solid #f5f5f5;
-  transition: opacity 0.2s;
-  min-width: 0;
-  max-width: 100%;
-  word-break: break-word;
-}
-
-.supp-check > span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.supp-check:last-child { border: none; }
-.supp-check:hover { opacity: 0.7; }
-.supp-check.taken { opacity: 0.5; text-decoration: line-through; }
-
-.supp-check input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: #4CAF50;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.supp-time {
-  font-size: 0.65rem;
-  color: #bbb;
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-.med-item {
-  font-size: 0.8rem;
-  padding: 4px 0;
-  word-break: break-word;
-}
-
-.empty {
-  color: #bbb;
-  font-style: italic;
-  font-size: 0.8rem;
-}
-
-/* ==========================================================
-   CHAT PANEL
-   ========================================================== */
-.chat-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-.chat-header {
-  padding: 10px 16px;
-  background: white;
-  border-bottom: 1px solid #e8e6e1;
-  font-weight: 600;
-  font-size: 0.9rem;
-  flex-shrink: 0;
-  max-width: 100%;
-}
-
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 12px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 100%;
-  min-height: 0;
-}
-
-/* -- Messages -- */
-.msg {
-  max-width: 85%;
-  padding: 10px 14px;
-  border-radius: 16px;
-  font-size: 0.85rem;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  word-break: break-word;
-  overflow: hidden;
-  min-width: 0;
-}
-
-.msg.user {
-  align-self: flex-end;
-  background: #4CAF50;
-  color: white;
-  border-bottom-right-radius: 4px;
-  max-width: 75%;
-}
-
-.msg.coach {
-  align-self: flex-start;
-  background: white;
-  border: 1px solid #e8e6e1;
-  border-bottom-left-radius: 4px;
-}
-
-.msg.system {
-  align-self: center;
-  background: #fff9e6;
-  border: 1px solid #f0e6c0;
-  font-size: 0.8rem;
-  color: #888;
-  max-width: 90%;
-}
-
-.msg.loading {
-  align-self: flex-start;
-  background: white;
-  border: 1px solid #e8e6e1;
-  color: #999;
-  font-style: italic;
-}
-
-/* -- Meal card in chat -- */
-.meal-card {
-  background: white;
-  border-radius: 20px;
-  overflow: hidden;
-  width: 100%;
-  max-width: 380px;
-  align-self: flex-start;
-  font-size: 0.85rem;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-  min-width: 0;
-}
-
-.meal-card-header {
-  padding: 14px 16px 8px;
-  font-weight: 700;
-  font-size: 1rem;
-  color: #1a1a1a;
-  word-break: break-word;
-}
-
-.meal-card-items {
-  padding: 0 16px 12px;
-  color: #888;
-  font-size: 0.8rem;
-  line-height: 1.5;
-  word-break: break-word;
-}
-
-.meal-card-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #e0e0e0, transparent);
-  margin: 0 16px;
-}
-
-.meal-card-calories {
-  padding: 14px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.meal-card-calories .label { font-size: 0.9rem; color: #555; font-weight: 500; }
-.meal-card-calories .value { font-size: 1.4rem; font-weight: 700; color: #1a1a1a; }
-
-.meal-card-macros {
-  display: flex;
-  justify-content: space-around;
-  padding: 8px 8px 16px;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-.macro-circle {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-}
-
-.macro-circle .ring {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.8rem;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.macro-circle .ring.fat   { background: #FFF8E1; color: #F9A825; border: 3px solid #FFD54F; }
-.macro-circle .ring.prot  { background: #FFF0F0; color: #E53935; border: 3px solid #EF9A9A; }
-.macro-circle .ring.carbs { background: #E3F2FD; color: #1565C0; border: 3px solid #90CAF9; }
-.macro-circle .ring.fiber { background: #F1F8E9; color: #558B2F; border: 3px solid #AED581; }
-
-.macro-circle .ring-sub   { font-size: 0.6rem; color: #aaa; margin-top: 1px; }
-.macro-circle .ring-label { font-size: 0.65rem; color: #888; }
-
-.meal-card-progress {
-  padding: 10px 16px;
-  background: #f8f8f6;
-  border-top: 1px solid #eee;
-  word-break: break-word;
-}
-
-.meal-card-progress .pline {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.78rem;
-  color: #555;
-  margin-bottom: 3px;
-  min-width: 0;
-  flex-wrap: wrap;
-}
-
-.meal-card-tip {
-  padding: 12px 16px;
-  background: #f0f7ff;
-  border-top: 1px solid #dde8f0;
-  font-size: 0.78rem;
-  color: #2c5282;
-  line-height: 1.5;
-  word-break: break-word;
-}
-
-.meal-card-tip strong { color: #1a365d; }
-
-.meal-card-actions {
-  padding: 12px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-top: 1px solid #f0f0f0;
-  overflow: visible;
-}
-
-.btn-save-meal {
-  padding: 12px;
-  background: #2d3748;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: center;
-  transition: background 0.2s;
-  width: 100%;
-}
-
-.btn-save-meal:hover { background: #1a202c; }
-
-.btn-correct {
-  padding: 8px;
-  background: none;
-  border: none;
-  font-size: 0.8rem;
-  cursor: pointer;
-  color: #90a4ae;
-  text-decoration: underline;
-  text-align: center;
-}
-
-.btn-correct:hover { color: #546e7a; }
-
-.btn-save {
-  padding: 10px 16px;
-  background: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn-save:hover { background: #43A047; }
-
-/* -- Quick actions -- */
-.quick-actions {
-  padding: 6px 10px;
-  background: white;
-  display: flex;
-  gap: 6px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  max-width: 100%;
-  flex-shrink: 0;
-}
-
-.quick-actions::-webkit-scrollbar { display: none; }
-
-.quick-btn {
-  padding: 5px 10px;
-  background: #f5f4f0;
-  border: 1px solid #e8e6e1;
-  border-radius: 16px;
-  font-size: 0.7rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.quick-btn:hover {
-  background: #e8f5e9;
-  border-color: #4CAF50;
-}
-
-/* -- Chat input bar -- */
-.chat-input {
-  padding: 8px;
-  padding-bottom: max(8px, env(safe-area-inset-bottom));
-  background: white;
-  border-top: 1px solid #e8e6e1;
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  max-width: 100%;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.photo-btn {
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  transition: background 0.2s;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.photo-btn:hover { background: #e8f5e9; }
-
-.chat-input input[type="text"] {
-  flex: 1;
-  min-width: 0;
-  padding: 10px 14px;
-  border: 1px solid #ddd;
-  border-radius: 24px;
-  font-size: 0.85rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.chat-input input[type="text"]:focus {
-  border-color: #4CAF50;
-}
-
-.send-btn {
-  padding: 10px 14px;
-  background: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.send-btn:hover { background: #43A047; }
-.send-btn:disabled { background: #ccc; cursor: not-allowed; }
-
-/* -- Modal -- */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.modal-box {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  max-width: 320px;
-  width: 100%;
-  text-align: center;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-}
-
-.modal-box p {
-  font-size: 0.95rem;
-  color: #333;
-  margin-bottom: 20px;
-  line-height: 1.4;
-}
-
-.modal-btns {
-  display: flex;
-  gap: 10px;
-}
-
-.modal-btns button {
-  flex: 1;
-  padding: 12px;
-  border: none;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.modal-cancel  { background: #f0f0f0; color: #555; }
-.modal-confirm { background: #e53935; color: white; }
-.modal-cancel:hover  { background: #e0e0e0; }
-.modal-confirm:hover { background: #c62828; }
-
-/* ==========================================================
-   OVERFLOW SAFETY — all screen sizes mobile-only
-   ========================================================== */
-#weightSparkline svg {
-  width: 100%;
-  max-width: 100%;
-  display: block;
-}
-
-#activityData {
-  max-width: 100%;
-  overflow: hidden;
-}
-
-#activityData svg {
-  width: 100%;
-  max-width: 100%;
-  display: block;
-}
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { scrollbar-width: none; }
+  .macro-gradient-cal  { background: linear-gradient(90deg, #4CAF50, #66BB6A); }
+  .macro-gradient-prot { background: linear-gradient(90deg, #2196F3, #42A5F5); }
+  .macro-gradient-fat  { background: linear-gradient(90deg, #FF9800, #FFB74D); }
+  .macro-gradient-carbs { background: linear-gradient(90deg, #9C27B0, #BA68C8); }
+  .macro-gradient-over { background: linear-gradient(90deg, #f44336, #e57373); }
+  .ring-fat   { background: #FFF8E1; color: #F9A825; border: 3px solid #FFD54F; }
+  .ring-prot  { background: #FFF0F0; color: #E53935; border: 3px solid #EF9A9A; }
+  .ring-carbs { background: #E3F2FD; color: #1565C0; border: 3px solid #90CAF9; }
+  .ring-fiber { background: #F1F8E9; color: #558B2F; border: 3px solid #AED581; }
 </style>
 </head>
-<body>
+<body class="bg-sand-100 text-gray-800 font-sans h-[100dvh] overflow-hidden">
 
-<div class="app">
+<!-- App Shell -->
+<div class="flex flex-col h-[100dvh] w-full overflow-hidden" id="app">
 
   <!-- ============================================================
-       PANEL: DASHBOARD (Tab 2 on mobile, sidebar on desktop)
+       PANEL: CHAT (Tab 1 - default)
        ============================================================ -->
-  <div class="tab-panel" id="panelDashboard">
-    <div class="sidebar-scroll" id="dashboardScroll">
-      <h1>Rachida</h1>
+  <div class="flex-1 flex flex-col min-h-0 overflow-hidden w-full" id="panelChat">
 
-      <!-- Day navigation -->
-      <div class="dash-day-nav">
-        <button class="dash-day-btn" onclick="changeDashDay(-1)">&lsaquo;</button>
-        <span class="dash-day-label" id="dateLabel"></span>
-        <button class="dash-day-btn" id="dashNextBtn" onclick="changeDashDay(1)">&rsaquo;</button>
+    <!-- Chat Header -->
+    <div class="px-4 py-2.5 bg-white border-b border-sand-200 font-semibold text-sm shrink-0">
+      &#128172; Coach Rachida
+    </div>
+
+    <!-- Messages Area -->
+    <div class="flex-1 overflow-y-auto overflow-x-hidden p-3 flex flex-col gap-3 min-h-0" id="messages">
+      <div class="self-center bg-yellow-50 border border-yellow-200 text-xs text-gray-500 rounded-2xl px-4 py-2.5 max-w-[90%] text-center break-words" id="welcomeMsg">Salut Rachida ! &#128522;</div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="px-2.5 py-1.5 bg-white flex gap-1.5 overflow-x-auto scrollbar-hide shrink-0">
+      <button onclick="sendQuick('brief du matin')" class="px-2.5 py-1 bg-sand-100 border border-sand-200 rounded-full text-[0.7rem] whitespace-nowrap shrink-0 hover:bg-coach-50 hover:border-coach-500 transition-colors">&#9728;&#65039; Brief</button>
+      <button onclick="sendQuick('qu\'est-ce que je peux manger ce soir ?')" class="px-2.5 py-1 bg-sand-100 border border-sand-200 rounded-full text-[0.7rem] whitespace-nowrap shrink-0 hover:bg-coach-50 hover:border-coach-500 transition-colors">&#127869;&#65039; Diner</button>
+      <button onclick="sendQuick('combien de calories il me reste ?')" class="px-2.5 py-1 bg-sand-100 border border-sand-200 rounded-full text-[0.7rem] whitespace-nowrap shrink-0 hover:bg-coach-50 hover:border-coach-500 transition-colors">&#128202; Reste</button>
+      <button onclick="sendQuick('un snack sain ?')" class="px-2.5 py-1 bg-sand-100 border border-sand-200 rounded-full text-[0.7rem] whitespace-nowrap shrink-0 hover:bg-coach-50 hover:border-coach-500 transition-colors">&#129372; Snack</button>
+      <button onclick="sendQuick('mes complements ?')" class="px-2.5 py-1 bg-sand-100 border border-sand-200 rounded-full text-[0.7rem] whitespace-nowrap shrink-0 hover:bg-coach-50 hover:border-coach-500 transition-colors">&#128138; Complements</button>
+      <button onclick="loadWeekly()" class="px-2.5 py-1 bg-sand-100 border border-sand-200 rounded-full text-[0.7rem] whitespace-nowrap shrink-0 hover:bg-coach-50 hover:border-coach-500 transition-colors">&#128200; Semaine</button>
+    </div>
+
+    <!-- Input Bar -->
+    <div class="px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-white border-t border-sand-200 flex items-center gap-1.5 shrink-0 overflow-hidden">
+      <label class="text-xl cursor-pointer p-1 rounded-full hover:bg-coach-50 flex items-center shrink-0" title="Prends en photo ton plat">
+        &#128248;
+        <input type="file" id="photoInput" accept="image/*" class="hidden" onchange="sendPhoto(this)">
+      </label>
+      <input type="text" id="chatInput" placeholder="Dis quelque chose a ton coach..." autocomplete="off"
+        class="flex-1 min-w-0 px-3.5 py-2.5 border border-gray-300 rounded-full text-sm outline-none focus:border-coach-500 transition-colors">
+      <button id="sendBtn" onclick="sendMessage()"
+        class="px-3.5 py-2.5 bg-coach-500 text-white border-none rounded-full text-xs font-semibold cursor-pointer hover:bg-coach-600 disabled:bg-gray-300 disabled:cursor-not-allowed shrink-0 whitespace-nowrap transition-colors">Envoyer</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PANEL: DASHBOARD (Tab 2)
+       ============================================================ -->
+  <div class="hidden flex-1 flex-col min-h-0 overflow-hidden w-full" id="panelDashboard">
+    <div class="flex-1 overflow-y-auto overflow-x-hidden p-4 w-full" id="dashboardScroll">
+
+      <h1 class="text-lg font-bold mb-0.5">Rachida</h1>
+
+      <!-- Day Navigation -->
+      <div class="flex items-center justify-between mb-3">
+        <button onclick="changeDashDay(-1)" class="bg-transparent border border-gray-300 rounded-lg px-3 py-1.5 text-base cursor-pointer shrink-0">&lsaquo;</button>
+        <span class="text-xs text-gray-500" id="dateLabel"></span>
+        <button id="dashNextBtn" onclick="changeDashDay(1)" class="bg-transparent border border-gray-300 rounded-lg px-3 py-1.5 text-base cursor-pointer shrink-0">&rsaquo;</button>
       </div>
 
-      <!-- 1. Weight + body comp + sparkline -->
-      <div class="card" id="weightCard" style="display:none">
-        <h2>&#9878;&#65039; Poids</h2>
-        <div class="weight-big"><span id="weightValue">&mdash;</span> <span>kg</span></div>
-        <div id="bodyComp" style="font-size:0.75rem;color:#888;margin-top:6px;line-height:1.6"></div>
-        <div id="weightSparkline" style="margin-top:8px"></div>
+      <!-- Weight Card -->
+      <div class="hidden bg-sand-50 border border-gray-200 rounded-xl p-3.5 mb-3 w-full overflow-hidden" id="weightCard">
+        <h2 class="text-[0.75rem] text-gray-500 uppercase tracking-wide mb-2.5">&#9878;&#65039; Poids</h2>
+        <div class="text-3xl font-bold"><span id="weightValue">&mdash;</span> <span class="text-sm text-gray-400 font-normal">kg</span></div>
+        <div id="bodyComp" class="text-[0.75rem] text-gray-500 mt-1.5 leading-relaxed"></div>
+        <div id="weightSparkline" class="mt-2 w-full overflow-hidden"></div>
       </div>
 
-      <!-- 2. Activity -->
-      <div class="card" id="activityCard" style="display:none">
-        <h2>&#128694;&#8205;&#9792;&#65039; Activite <span id="activityLabel" style="font-weight:400;font-size:0.65rem;color:#aaa"></span></h2>
-        <div id="activityData" style="font-size:0.85rem"></div>
+      <!-- Activity Card -->
+      <div class="hidden bg-sand-50 border border-gray-200 rounded-xl p-3.5 mb-3 w-full overflow-hidden" id="activityCard">
+        <h2 class="text-[0.75rem] text-gray-500 uppercase tracking-wide mb-2.5">&#128694;&#8205;&#9792;&#65039; Activite <span id="activityLabel" class="font-normal text-[0.65rem] text-gray-400"></span></h2>
+        <div id="activityData" class="text-sm w-full overflow-hidden"></div>
       </div>
 
-      <!-- 3. Macros -->
-      <div class="card">
-        <h2>&#127919; Macros du jour</h2>
-        <div class="macro-row"><span>Calories</span><span id="calLabel">0 / 0 kcal</span></div>
-        <div class="macro-bar"><div class="macro-fill cal" id="calBar" style="width:0%">0%</div></div>
-        <div class="macro-row"><span>Proteines</span><span id="protLabel">0 / 0g</span></div>
-        <div class="macro-bar"><div class="macro-fill prot" id="protBar" style="width:0%">0%</div></div>
-        <div class="macro-row"><span>Lipides</span><span id="fatLabel">0 / 0g</span></div>
-        <div class="macro-bar"><div class="macro-fill fat" id="fatBar" style="width:0%">0%</div></div>
-        <div class="macro-row"><span>Glucides</span><span id="carbsLabel">0 / 0g</span></div>
-        <div class="macro-bar"><div class="macro-fill carbs" id="carbsBar" style="width:0%">0%</div></div>
+      <!-- Macros Card -->
+      <div class="bg-sand-50 border border-gray-200 rounded-xl p-3.5 mb-3 w-full overflow-hidden">
+        <h2 class="text-[0.75rem] text-gray-500 uppercase tracking-wide mb-2.5">&#127919; Macros du jour</h2>
+        <div class="flex justify-between items-center text-xs text-gray-600 mb-1"><span>Calories</span><span id="calLabel">0 / 0 kcal</span></div>
+        <div class="bg-gray-200 rounded-md h-5 overflow-hidden mb-2 w-full"><div class="h-full rounded-md flex items-center pl-2 text-[0.7rem] text-white font-semibold transition-all duration-400 min-w-[28px] macro-gradient-cal" id="calBar" style="width:0%">0%</div></div>
+        <div class="flex justify-between items-center text-xs text-gray-600 mb-1"><span>Proteines</span><span id="protLabel">0 / 0g</span></div>
+        <div class="bg-gray-200 rounded-md h-5 overflow-hidden mb-2 w-full"><div class="h-full rounded-md flex items-center pl-2 text-[0.7rem] text-white font-semibold transition-all duration-400 min-w-[28px] macro-gradient-prot" id="protBar" style="width:0%">0%</div></div>
+        <div class="flex justify-between items-center text-xs text-gray-600 mb-1"><span>Lipides</span><span id="fatLabel">0 / 0g</span></div>
+        <div class="bg-gray-200 rounded-md h-5 overflow-hidden mb-2 w-full"><div class="h-full rounded-md flex items-center pl-2 text-[0.7rem] text-white font-semibold transition-all duration-400 min-w-[28px] macro-gradient-fat" id="fatBar" style="width:0%">0%</div></div>
+        <div class="flex justify-between items-center text-xs text-gray-600 mb-1"><span>Glucides</span><span id="carbsLabel">0 / 0g</span></div>
+        <div class="bg-gray-200 rounded-md h-5 overflow-hidden mb-2 w-full"><div class="h-full rounded-md flex items-center pl-2 text-[0.7rem] text-white font-semibold transition-all duration-400 min-w-[28px] macro-gradient-carbs" id="carbsBar" style="width:0%">0%</div></div>
       </div>
 
-      <!-- 4. Meals with 7-day nav -->
-      <div class="card">
-        <h2>&#127869;&#65039; Repas <span id="mealDate" style="font-weight:400;color:#999;font-size:0.7rem"></span></h2>
-        <div class="day-nav" id="dayNav"></div>
-        <div id="mealsList"><span class="empty">Aucun repas enregistre</span></div>
+      <!-- Meals Card -->
+      <div class="bg-sand-50 border border-gray-200 rounded-xl p-3.5 mb-3 w-full overflow-hidden">
+        <h2 class="text-[0.75rem] text-gray-500 uppercase tracking-wide mb-2.5">&#127869;&#65039; Repas <span id="mealDate" class="font-normal text-gray-400 text-[0.7rem]"></span></h2>
+        <div class="flex gap-1 mb-2 overflow-x-auto scrollbar-hide" id="dayNav"></div>
+        <div id="mealsList"><span class="text-gray-400 italic text-sm">Aucun repas enregistre</span></div>
       </div>
 
-      <!-- 5. Micronutrients (collapsible) -->
-      <div class="card" id="microsCard" style="display:none">
-        <h2 style="cursor:pointer" onclick="document.getElementById('microsBody').style.display = document.getElementById('microsBody').style.display === 'none' ? '' : 'none'">&#128300; Micronutriments &#9662;</h2>
+      <!-- Micronutrients Card -->
+      <div class="hidden bg-sand-50 border border-gray-200 rounded-xl p-3.5 mb-3 w-full overflow-hidden" id="microsCard">
+        <h2 class="text-[0.75rem] text-gray-500 uppercase tracking-wide mb-2.5 cursor-pointer" onclick="document.getElementById('microsBody').classList.toggle('hidden')">&#128300; Micronutriments &#9662;</h2>
         <div id="microsBody"></div>
       </div>
 
-      <!-- 6. Supplements (visible in sidebar on desktop, also in supplements tab on mobile) -->
-      <div class="card" id="sidebarSupps">
-        <h2>&#128138; Complements</h2>
+      <!-- Supplements Card -->
+      <div class="bg-sand-50 border border-gray-200 rounded-xl p-3.5 mb-3 w-full overflow-hidden" id="sidebarSupps">
+        <h2 class="text-[0.75rem] text-gray-500 uppercase tracking-wide mb-2.5">&#128138; Complements</h2>
         <div id="suppsList"></div>
       </div>
 
-      <!-- 7. Medications -->
-      <div class="card">
-        <h2>&#128138; Medicaments</h2>
-        <div id="medsList"><span class="empty">Aucun medicament</span></div>
+      <!-- Medications Card -->
+      <div class="bg-sand-50 border border-gray-200 rounded-xl p-3.5 mb-3 w-full overflow-hidden">
+        <h2 class="text-[0.75rem] text-gray-500 uppercase tracking-wide mb-2.5">&#128138; Medicaments</h2>
+        <div id="medsList"><span class="text-gray-400 italic text-sm">Aucun medicament</span></div>
       </div>
     </div>
   </div>
 
   <!-- ============================================================
-       PANEL: CHAT (Tab 1 on mobile, right side on desktop)
+       PANEL: SUPPLEMENTS (Tab 3)
        ============================================================ -->
-  <div class="tab-panel active" id="panelChat">
-    <div class="chat-area">
-      <div class="chat-header">&#128172; Coach Rachida</div>
-
-      <div class="chat-messages" id="messages">
-        <div class="msg system" id="welcomeMsg">Salut Rachida ! &#128522;</div>
-      </div>
-
-      <div class="quick-actions">
-        <button class="quick-btn" onclick="sendQuick('brief du matin')">&#9728;&#65039; Brief</button>
-        <button class="quick-btn" onclick="sendQuick('qu\'est-ce que je peux manger ce soir ?')">&#127869;&#65039; Diner</button>
-        <button class="quick-btn" onclick="sendQuick('combien de calories il me reste ?')">&#128202; Reste</button>
-        <button class="quick-btn" onclick="sendQuick('un snack sain ?')">&#129372; Snack</button>
-        <button class="quick-btn" onclick="sendQuick('mes complements ?')">&#128138; Complements</button>
-        <button class="quick-btn" onclick="loadWeekly()">&#128200; Semaine</button>
-      </div>
-
-      <div class="chat-input">
-        <label class="photo-btn" title="Prends en photo ton plat">
-          &#128248;
-          <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="sendPhoto(this)">
-        </label>
-        <input type="text" id="chatInput" placeholder="Dis quelque chose a ton coach..." autocomplete="off">
-        <button class="send-btn" id="sendBtn" onclick="sendMessage()">Envoyer</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============================================================
-       PANEL: SUPPLEMENTS (Tab 3 on mobile only)
-       ============================================================ -->
-  <div class="tab-panel" id="panelSupplements">
-    <div class="sidebar-scroll">
-      <h1 style="margin-bottom:16px">&#128138; Complements &amp; Medicaments</h1>
-      <div class="card">
-        <h2>&#128138; Complements</h2>
+  <div class="hidden flex-1 flex-col min-h-0 overflow-hidden w-full" id="panelSupplements">
+    <div class="flex-1 overflow-y-auto overflow-x-hidden p-4 w-full">
+      <h1 class="text-lg font-bold mb-4">&#128138; Complements &amp; Medicaments</h1>
+      <div class="bg-sand-50 border border-gray-200 rounded-xl p-3.5 mb-3 w-full overflow-hidden">
+        <h2 class="text-[0.75rem] text-gray-500 uppercase tracking-wide mb-2.5">&#128138; Complements</h2>
         <div id="suppsListMobile"></div>
       </div>
-      <div class="card">
-        <h2>&#128138; Medicaments</h2>
-        <div id="medsListMobile"><span class="empty">Aucun medicament</span></div>
+      <div class="bg-sand-50 border border-gray-200 rounded-xl p-3.5 mb-3 w-full overflow-hidden">
+        <h2 class="text-[0.75rem] text-gray-500 uppercase tracking-wide mb-2.5">&#128138; Medicaments</h2>
+        <div id="medsListMobile"><span class="text-gray-400 italic text-sm">Aucun medicament</span></div>
       </div>
     </div>
   </div>
 
   <!-- ============================================================
-       BOTTOM TAB BAR (mobile only)
+       BOTTOM TAB BAR
        ============================================================ -->
-  <div class="tab-bar" id="tabBar">
-    <button class="tab-bar-btn active" data-tab="panelChat" onclick="switchTab('panelChat')">
-      <span class="tab-icon">&#128172;</span>
+  <div class="fixed bottom-0 w-full bg-white border-t border-sand-200 flex z-50 pb-[env(safe-area-inset-bottom)]" id="tabBar">
+    <button class="flex-1 flex flex-col items-center gap-0.5 py-2 px-1 border-none bg-transparent text-[0.65rem] text-coach-500 cursor-pointer transition-colors" data-tab="panelChat" onclick="switchTab('panelChat')">
+      <span class="text-xl leading-none">&#128172;</span>
       Chat
     </button>
-    <button class="tab-bar-btn" data-tab="panelDashboard" onclick="switchTab('panelDashboard')">
-      <span class="tab-icon">&#128202;</span>
+    <button class="flex-1 flex flex-col items-center gap-0.5 py-2 px-1 border-none bg-transparent text-[0.65rem] text-gray-400 cursor-pointer transition-colors" data-tab="panelDashboard" onclick="switchTab('panelDashboard')">
+      <span class="text-xl leading-none">&#128202;</span>
       Dashboard
     </button>
-    <button class="tab-bar-btn" data-tab="panelSupplements" onclick="switchTab('panelSupplements')">
-      <span class="tab-icon">&#128138;</span>
+    <button class="flex-1 flex flex-col items-center gap-0.5 py-2 px-1 border-none bg-transparent text-[0.65rem] text-gray-400 cursor-pointer transition-colors" data-tab="panelSupplements" onclick="switchTab('panelSupplements')">
+      <span class="text-xl leading-none">&#128138;</span>
       Complements
     </button>
   </div>
@@ -941,36 +182,33 @@ body {
 </div><!-- /app -->
 
 <!-- ============================================================
-     JAVASCRIPT — All logic preserved
+     JAVASCRIPT
      ============================================================ -->
 <script>
 /* ==========================================================
-   TAB SWITCHING (mobile only)
+   TAB SWITCHING
    ========================================================== */
 function switchTab(tabId) {
-  // On desktop, ignore tab switching
-  if (window.innerWidth >= 768) return;
+  // Hide all panels
+  document.querySelectorAll('#panelChat, #panelDashboard, #panelSupplements').forEach(p => {
+    p.classList.add('hidden');
+    p.classList.remove('flex');
+  });
+  // Deactivate all tab buttons
+  document.querySelectorAll('#tabBar button').forEach(b => {
+    b.classList.remove('text-coach-500');
+    b.classList.add('text-gray-400');
+  });
 
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-bar-btn').forEach(b => b.classList.remove('active'));
+  // Show selected panel
+  const panel = document.getElementById(tabId);
+  panel.classList.remove('hidden');
+  panel.classList.add('flex');
 
-  document.getElementById(tabId).classList.add('active');
-  document.querySelector(`.tab-bar-btn[data-tab="${tabId}"]`).classList.add('active');
-}
-
-// Handle resize: ensure desktop layout is correct
-window.addEventListener('resize', () => {
-  if (window.innerWidth >= 768) {
-    // On desktop, dashboard and chat always visible
-    document.getElementById('panelDashboard').classList.add('active');
-    document.getElementById('panelChat').classList.add('active');
-    document.getElementById('panelSupplements').classList.remove('active');
-  }
-});
-
-// Set initial state based on viewport
-if (window.innerWidth >= 768) {
-  document.getElementById('panelDashboard').classList.add('active');
+  // Activate selected tab button
+  const btn = document.querySelector(`#tabBar button[data-tab="${tabId}"]`);
+  btn.classList.remove('text-gray-400');
+  btn.classList.add('text-coach-500');
 }
 
 /* ==========================================================
@@ -1002,7 +240,7 @@ function updateDashboard(d) {
 
   // -- 1. Weight + body composition + sparkline --
   if (d.weight) {
-    document.getElementById('weightCard').style.display = '';
+    document.getElementById('weightCard').classList.remove('hidden');
     document.getElementById('weightValue').textContent = d.weight.weight_kg;
     let comp = '';
     if (d.weight.fat_percent) comp += `Graisse ${d.weight.fat_percent}% \u00b7 `;
@@ -1041,40 +279,40 @@ function updateDashboard(d) {
 
   // -- 2. Activity today + 30-day bar chart --
   if (d.activity || (d.weekActivity && d.weekActivity.length > 0)) {
-    document.getElementById('activityCard').style.display = '';
+    document.getElementById('activityCard').classList.remove('hidden');
     let html = '';
     const act = d.activity;
     const hasToday = act && (act.steps > 0 || act.active_calories > 0);
 
     if (hasToday) {
       document.getElementById('activityLabel').textContent = "aujourd'hui";
-      const dist = act.distance_km ? `<div><div style="font-size:1.3rem;font-weight:700">${act.distance_km.toFixed(1)}</div><div style="font-size:0.7rem;color:#888">km</div></div>` : '';
-      html += `<div style="display:flex;justify-content:space-around;text-align:center;margin-bottom:8px">
-        <div><div style="font-size:1.3rem;font-weight:700">${(act.steps||0).toLocaleString('fr-FR')}</div><div style="font-size:0.7rem;color:#888">pas</div></div>
-        <div><div style="font-size:1.3rem;font-weight:700">${Math.round(act.active_calories||0)}</div><div style="font-size:0.7rem;color:#888">kcal</div></div>
-        <div><div style="font-size:1.3rem;font-weight:700">${act.exercise_minutes||0}</div><div style="font-size:0.7rem;color:#888">min</div></div>
+      const dist = act.distance_km ? `<div class="text-center"><div class="text-xl font-bold">${act.distance_km.toFixed(1)}</div><div class="text-[0.7rem] text-gray-500">km</div></div>` : '';
+      html += `<div class="flex justify-around text-center mb-2">
+        <div><div class="text-xl font-bold">${(act.steps||0).toLocaleString('fr-FR')}</div><div class="text-[0.7rem] text-gray-500">pas</div></div>
+        <div><div class="text-xl font-bold">${Math.round(act.active_calories||0)}</div><div class="text-[0.7rem] text-gray-500">kcal</div></div>
+        <div><div class="text-xl font-bold">${act.exercise_minutes||0}</div><div class="text-[0.7rem] text-gray-500">min</div></div>
         ${dist}
       </div>`;
     } else if (d.weekActivity && d.weekActivity.length > 0) {
       const yesterday = d.weekActivity[d.weekActivity.length - 1];
       if (yesterday && yesterday.steps > 0) {
         document.getElementById('activityLabel').textContent = "hier";
-        html += `<div style="display:flex;justify-content:space-around;text-align:center;margin-bottom:8px">
-          <div><div style="font-size:1.3rem;font-weight:700">${(yesterday.steps||0).toLocaleString('fr-FR')}</div><div style="font-size:0.7rem;color:#888">pas</div></div>
-          <div><div style="font-size:1.3rem;font-weight:700">${Math.round(yesterday.active_calories||0)}</div><div style="font-size:0.7rem;color:#888">kcal</div></div>
+        html += `<div class="flex justify-around text-center mb-2">
+          <div><div class="text-xl font-bold">${(yesterday.steps||0).toLocaleString('fr-FR')}</div><div class="text-[0.7rem] text-gray-500">pas</div></div>
+          <div><div class="text-xl font-bold">${Math.round(yesterday.active_calories||0)}</div><div class="text-[0.7rem] text-gray-500">kcal</div></div>
         </div>`;
       }
     }
 
     // Manual activity input button
-    html += `<div style="text-align:center;margin:8px 0 4px">
-      <button onclick="showActivityInput()" style="background:none;border:1px solid #ddd;border-radius:16px;padding:5px 14px;font-size:0.7rem;color:#888;cursor:pointer">+ Ajouter activite</button>
+    html += `<div class="text-center my-2">
+      <button onclick="showActivityInput()" class="bg-transparent border border-gray-300 rounded-full px-3.5 py-1 text-[0.7rem] text-gray-500 cursor-pointer hover:border-coach-500 hover:text-coach-500 transition-colors">+ Ajouter activite</button>
     </div>`;
 
     if (d.weekActivity && d.weekActivity.length > 0) {
       const maxSteps = Math.max(...d.weekActivity.map(a => a.steps || 0));
       const barH = 44;
-      html += `<div style="display:flex;align-items:flex-end;gap:2px;height:${barH + 14}px;margin-top:8px">`;
+      html += `<div class="flex items-end gap-0.5 mt-2" style="height:${barH + 14}px">`;
       d.weekActivity.forEach((a, i) => {
         const steps = a.steps || 0;
         const h = maxSteps > 0 ? Math.max(3, Math.round((steps / maxSteps) * barH)) : 3;
@@ -1083,9 +321,9 @@ function updateDashboard(d) {
         const opacity = isToday ? '1' : '0.7';
         const day = new Date(a.date + 'T12:00').toLocaleDateString('fr-FR', {weekday:'narrow'});
         const showLabel = d.weekActivity.length <= 14 || i % 3 === 0 || isToday;
-        html += `<div style="flex:1;text-align:center" title="${a.date}: ${steps.toLocaleString('fr-FR')} pas / ${Math.round(a.active_calories||0)} kcal">
+        html += `<div class="flex-1 text-center" title="${a.date}: ${steps.toLocaleString('fr-FR')} pas / ${Math.round(a.active_calories||0)} kcal">
           <div style="background:${color};opacity:${opacity};border-radius:2px;height:${h}px;margin:0 auto;width:80%"></div>
-          <div style="font-size:0.5rem;color:#aaa;margin-top:2px">${showLabel ? day : ''}</div>
+          <div class="text-[0.5rem] text-gray-400 mt-0.5">${showLabel ? day : ''}</div>
         </div>`;
       });
       html += `</div>`;
@@ -1122,33 +360,31 @@ function updateDashboard(d) {
     for (const [timing, label] of Object.entries(groups)) {
       const items = d.supplements.filter(s => s.timing === timing);
       if (items.length === 0) continue;
-      html += `<div class="supp-group-title">${label}</div>`;
+      html += `<div class="text-[0.7rem] text-gray-400 uppercase tracking-wide mt-2 mb-1 first:mt-0">${label}</div>`;
       items.forEach(s => {
         const checked = s.taken ? 'checked' : '';
-        const takenCls = s.taken ? ' taken' : '';
+        const takenCls = s.taken ? ' opacity-50 line-through' : '';
         const timeStr = s.taken_at ? s.taken_at.substring(0,5) : s.reminder_time;
-        html += `<label class="supp-check${takenCls}">
-          <input type="checkbox" ${checked} onchange="toggleSupp('${s.id}', this)">
-          <span>${s.name} \u2014 ${s.dose}</span>
-          <span class="supp-time">${timeStr}</span>
+        html += `<label class="flex items-center gap-2 py-1.5 cursor-pointer text-sm border-b border-gray-100 last:border-none hover:opacity-70 transition-opacity break-words${takenCls}">
+          <input type="checkbox" ${checked} onchange="toggleSupp('${s.id}', this)" class="w-4 h-4 accent-coach-500 cursor-pointer shrink-0">
+          <span class="min-w-0 truncate">${s.name} \u2014 ${s.dose}</span>
+          <span class="text-[0.65rem] text-gray-300 ml-auto shrink-0">${timeStr}</span>
         </label>`;
       });
     }
     suppsEl.innerHTML = html;
-    // Mirror to mobile supplements tab
     document.getElementById('suppsListMobile').innerHTML = html.replace(/toggleSupp\(/g, 'toggleSupp(');
   }
 
   // -- 6. Medications --
   const medsEl = document.getElementById('medsList');
   if (!d.medications || d.medications.length === 0) {
-    medsEl.innerHTML = '<span class="empty">Aucun m\u00e9dicament</span>';
+    medsEl.innerHTML = '<span class="text-gray-400 italic text-sm">Aucun m\u00e9dicament</span>';
   } else {
     medsEl.innerHTML = d.medications.map(m =>
-      `<div class="med-item">\uD83D\uDC8A ${m.name}${m.dose ? ' \u2014 '+m.dose : ''}</div>`
+      `<div class="text-sm py-1 break-words">\uD83D\uDC8A ${m.name}${m.dose ? ' \u2014 '+m.dose : ''}</div>`
     ).join('');
   }
-  // Mirror medications to mobile tab
   document.getElementById('medsListMobile').innerHTML = medsEl.innerHTML;
 }
 
@@ -1157,7 +393,7 @@ function setBar(id, pct, cls) {
   const clamped = Math.min(pct, 100);
   el.style.width = Math.max(clamped, 3) + '%';
   el.textContent = pct + '%';
-  el.className = 'macro-fill ' + cls + (pct > 100 ? ' over' : '');
+  el.className = `h-full rounded-md flex items-center pl-2 text-[0.7rem] text-white font-semibold transition-all duration-400 min-w-[28px] macro-gradient-${cls}` + (pct > 100 ? ' macro-gradient-over' : '');
 }
 
 /* ==========================================================
@@ -1210,7 +446,17 @@ function addMessage(text, type) {
   }
 
   const el = document.createElement('div');
-  el.className = 'msg ' + type;
+
+  if (type === 'user') {
+    el.className = 'self-end bg-coach-500 text-white rounded-2xl rounded-br-sm px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-hidden max-w-[75%]';
+  } else if (type === 'coach') {
+    el.className = 'self-start bg-white border border-sand-200 rounded-2xl rounded-bl-sm px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-hidden max-w-[85%]';
+  } else if (type === 'system') {
+    el.className = 'self-center bg-yellow-50 border border-yellow-200 text-xs text-gray-500 rounded-2xl px-4 py-2.5 max-w-[90%] text-center break-words';
+  } else if (type === 'loading') {
+    el.className = 'self-start bg-white border border-sand-200 rounded-2xl px-3.5 py-2.5 text-sm text-gray-400 italic break-words';
+  }
+
   el.textContent = text;
   messagesEl.appendChild(el);
   messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -1246,39 +492,39 @@ function addMealCard(text) {
   const itemsDesc = items.map(i => `${i.name} (${i.qty}g)`).join(', ');
 
   const card = document.createElement('div');
-  card.className = 'meal-card';
+  card.className = 'self-start bg-white rounded-2xl overflow-hidden w-full max-w-[380px] text-sm shadow-md';
 
   card.innerHTML = `
-    <div class="meal-card-header">${headerLine.replace(/[\uD83C\uDF05\uD83C\uDF7D\uFE0F\uD83C\uDF19\uD83E\uDED0]/gu, '').replace('enregistr\u00e9', '').trim() || 'Repas'}</div>
-    <div class="meal-card-items">${itemsDesc}</div>
-    <div class="meal-card-divider"></div>
-    <div class="meal-card-calories">
-      <span class="label">Calories</span>
-      <span class="value">${totalCal} kcal</span>
+    <div class="px-4 pt-3.5 pb-2 font-bold text-base text-gray-900 break-words">${headerLine.replace(/[\uD83C\uDF05\uD83C\uDF7D\uFE0F\uD83C\uDF19\uD83E\uDED0]/gu, '').replace('enregistr\u00e9', '').trim() || 'Repas'}</div>
+    <div class="px-4 pb-3 text-gray-500 text-xs leading-relaxed break-words">${itemsDesc}</div>
+    <div class="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mx-4"></div>
+    <div class="px-4 py-3.5 flex justify-between items-center">
+      <span class="text-sm text-gray-600 font-medium">Calories</span>
+      <span class="text-xl font-bold text-gray-900">${totalCal} kcal</span>
     </div>
-    <div class="meal-card-macros">
-      <div class="macro-circle">
-        <div class="ring fat">${totalL}<div class="ring-sub">g</div></div>
-        <span class="ring-label">Lipides</span>
+    <div class="flex justify-around px-2 pb-4 overflow-hidden">
+      <div class="flex flex-col items-center gap-1">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-xs ring-fat">${totalL}<span class="text-[0.6rem] text-gray-400 mt-0.5">g</span></div>
+        <span class="text-[0.65rem] text-gray-500">Lipides</span>
       </div>
-      <div class="macro-circle">
-        <div class="ring prot">${totalP}<div class="ring-sub">g</div></div>
-        <span class="ring-label">Prot\u00e9ines</span>
+      <div class="flex flex-col items-center gap-1">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-xs ring-prot">${totalP}<span class="text-[0.6rem] text-gray-400 mt-0.5">g</span></div>
+        <span class="text-[0.65rem] text-gray-500">Prot\u00e9ines</span>
       </div>
-      <div class="macro-circle">
-        <div class="ring carbs">${totalG}<div class="ring-sub">g</div></div>
-        <span class="ring-label">Glucides</span>
+      <div class="flex flex-col items-center gap-1">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-xs ring-carbs">${totalG}<span class="text-[0.6rem] text-gray-400 mt-0.5">g</span></div>
+        <span class="text-[0.65rem] text-gray-500">Glucides</span>
       </div>
     </div>
-    <div class="meal-card-progress">
-      ${calLine ? `<div class="pline"><span>${calLine.replace('\uD83D\uDCCA ', '').trim()}</span></div>` : ''}
-      ${resteLine ? `<div class="pline"><strong>${resteLine.trim()}</strong></div>` : ''}
+    <div class="px-4 py-2.5 bg-gray-50 border-t border-gray-200 break-words">
+      ${calLine ? `<div class="flex justify-between text-[0.78rem] text-gray-600 mb-0.5 flex-wrap"><span>${calLine.replace('\uD83D\uDCCA ', '').trim()}</span></div>` : ''}
+      ${resteLine ? `<div class="text-[0.78rem] font-semibold text-gray-700">${resteLine.trim()}</div>` : ''}
     </div>
-    ${tipLine ? `<div class="meal-card-tip">
-      <strong>\uD83D\uDCA1 ${tipLine}</strong><br>${whyLine}
+    ${tipLine ? `<div class="px-4 py-3 bg-blue-50 border-t border-blue-200 text-[0.78rem] text-blue-800 leading-relaxed break-words">
+      <strong class="text-blue-900">\uD83D\uDCA1 ${tipLine}</strong><br>${whyLine}
     </div>` : ''}
-    <div class="meal-card-actions">
-      <button class="btn-correct" onclick="correctMeal(this)">\u270F\uFE0F Corriger les r\u00e9sultats</button>
+    <div class="px-4 py-3 flex flex-col gap-2 border-t border-gray-100">
+      <button class="text-sm text-gray-400 underline hover:text-gray-600 transition-colors" onclick="correctMeal(this)">\u270F\uFE0F Corriger les r\u00e9sultats</button>
     </div>
   `;
 
@@ -1288,29 +534,29 @@ function addMealCard(text) {
 }
 
 function correctMeal(btn) {
-  const card = btn.closest('.meal-card');
-  const actions = card.querySelector('.meal-card-actions');
+  const card = btn.closest('.self-start');
+  const actions = card.querySelector('.border-t.border-gray-100:last-child') || btn.parentElement;
   actions.innerHTML = `
     <input type="text" id="correctionInput" placeholder="Ex: c'est des oeufs poch\u00e9s, pas de la f\u00eata"
-      style="width:100%;padding:12px;border:1px solid #ddd;border-radius:12px;font-size:0.85rem;outline:none;margin-bottom:8px">
-    <button class="btn-save" onclick="sendCorrection(this)" style="width:100%">\u2705 Recalculer</button>
+      class="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm outline-none mb-2 focus:border-coach-500">
+    <button class="w-full py-2.5 bg-coach-500 text-white border-none rounded-xl text-sm font-semibold cursor-pointer hover:bg-coach-600 transition-colors" onclick="sendCorrection(this)">\u2705 Recalculer</button>
   `;
   document.getElementById('correctionInput').focus();
   document.getElementById('correctionInput').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') sendCorrection(actions.querySelector('.btn-save'));
+    if (e.key === 'Enter') sendCorrection(actions.querySelector('button'));
   });
 }
 
 async function sendCorrection(btn) {
-  const card = btn.closest('.meal-card');
+  const card = btn.closest('.self-start');
   const input = card.querySelector('#correctionInput');
   const correction = input.value.trim();
   if (!correction) return;
 
-  const originalItems = card.querySelector('.meal-card-items')?.textContent || '';
-  const originalTitle = card.querySelector('.meal-card-header')?.textContent || '';
+  const originalItems = card.querySelector('.text-gray-500.text-xs')?.textContent || '';
+  const originalTitle = card.querySelector('.font-bold.text-base')?.textContent || '';
 
-  card.querySelector('.meal-card-actions').innerHTML = '<div style="text-align:center;color:#888;font-size:0.8rem;padding:12px">\u23F3 Recalcul en cours...</div>';
+  btn.parentElement.innerHTML = '<div class="text-center text-gray-500 text-xs py-3">\u23F3 Recalcul en cours...</div>';
 
   try {
     await fetch('/api/meal/last', { method: 'DELETE' });
@@ -1326,9 +572,9 @@ async function sendCorrection(btn) {
     addMessage(data.response, 'coach');
     if (data.dashboard) updateDashboard(data.dashboard);
   } catch(e) {
-    card.querySelector('.meal-card-actions').innerHTML = `
-      <button class="btn-save-meal" onclick="this.textContent='\u2705 Enregistr\u00e9 !';this.disabled=true">Enregistrer ce repas</button>
-      <button class="btn-correct" onclick="correctMeal(this)">Corriger les r\u00e9sultats</button>
+    btn.parentElement.innerHTML = `
+      <button class="w-full py-3 bg-gray-800 text-white border-none rounded-xl text-sm font-semibold cursor-pointer hover:bg-gray-900 transition-colors" onclick="this.textContent='\u2705 Enregistr\u00e9 !';this.disabled=true">Enregistrer ce repas</button>
+      <button class="text-sm text-gray-400 underline hover:text-gray-600 transition-colors" onclick="correctMeal(this)">Corriger les r\u00e9sultats</button>
     `;
   }
 }
@@ -1394,7 +640,7 @@ async function sendPhoto(input) {
 function renderMeals(meals) {
   const mealsEl = document.getElementById('mealsList');
   if (!meals || meals.length === 0) {
-    mealsEl.innerHTML = '<span class="empty">Aucun repas enregistr\u00e9</span>';
+    mealsEl.innerHTML = '<span class="text-gray-400 italic text-sm">Aucun repas enregistr\u00e9</span>';
     return;
   }
   const typeNames = {breakfast:'Petit-d\u00e9j',lunch:'D\u00e9jeuner',dinner:'D\u00eener',snack:'Collation'};
@@ -1403,12 +649,12 @@ function renderMeals(meals) {
     const title = typeNames[m.meal_type] || m.meal_type;
     const emoji = typeEmojis[m.meal_type] || '\uD83C\uDF74';
     const desc = m.description.length > 35 ? m.description.substring(0,35) + '...' : m.description;
-    return `<div class="meal-item">
-      <div class="meal-item-row">
+    return `<div class="text-sm py-1.5 border-b border-gray-100 last:border-none flex flex-col gap-0.5 break-words">
+      <div class="flex justify-between items-center">
         <strong>${emoji} ${title}</strong>
-        <span>${Math.round(m.calories)} kcal <span class="meal-actions"><button class="meal-del" onclick="deleteMeal(${m.id})">\uD83D\uDDD1\uFE0F</button></span></span>
+        <span class="shrink-0">${Math.round(m.calories)} kcal <button onclick="deleteMeal(${m.id})" class="bg-transparent border-none cursor-pointer text-[0.7rem] px-1.5 py-0.5 rounded text-red-300 hover:bg-red-50 transition-colors">\uD83D\uDDD1\uFE0F</button></span>
       </div>
-      <div class="meal-desc">${desc}</div>
+      <div class="text-[0.72rem] text-gray-400">${desc}</div>
     </div>`;
   }).join('');
 }
@@ -1424,8 +670,8 @@ function buildDayNav() {
     const d = new Date(Date.now() - i * 86400000);
     const iso = d.toISOString().split('T')[0];
     const label = i === 0 ? "Auj." : days[d.getDay()] + ' ' + d.getDate();
-    const active = iso === selectedDate ? ' active' : '';
-    html += `<button class="day-btn${active}" onclick="loadDay('${iso}')">${label}</button>`;
+    const active = iso === selectedDate;
+    html += `<button onclick="loadDay('${iso}')" class="px-2 py-1 border rounded-lg text-[0.7rem] cursor-pointer whitespace-nowrap shrink-0 transition-all ${active ? 'bg-coach-500 text-white border-coach-500' : 'bg-white border-sand-200 hover:border-coach-500'}">${label}</button>`;
   }
   nav.innerHTML = html;
 }
@@ -1461,13 +707,13 @@ function changeDashDay(delta) {
    ========================================================== */
 function showModal(message, onConfirm) {
   const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
+  overlay.className = 'fixed inset-0 bg-black/40 flex items-center justify-center z-[1000] p-5';
   overlay.innerHTML = `
-    <div class="modal-box">
-      <p>${message}</p>
-      <div class="modal-btns">
-        <button class="modal-cancel">Annuler</button>
-        <button class="modal-confirm">Supprimer</button>
+    <div class="bg-white rounded-2xl p-6 max-w-xs w-full text-center shadow-2xl">
+      <p class="text-sm text-gray-700 mb-5 leading-snug">${message}</p>
+      <div class="flex gap-2.5">
+        <button class="flex-1 py-3 bg-gray-100 text-gray-600 border-none rounded-xl text-sm font-semibold cursor-pointer hover:bg-gray-200 transition-colors modal-cancel">Annuler</button>
+        <button class="flex-1 py-3 bg-red-600 text-white border-none rounded-xl text-sm font-semibold cursor-pointer hover:bg-red-700 transition-colors modal-confirm">Supprimer</button>
       </div>
     </div>`;
   overlay.querySelector('.modal-cancel').onclick = () => overlay.remove();
@@ -1498,9 +744,9 @@ async function loadMicros(date) {
 
     const c = data.consumed;
     const hasData = Object.values(c).some(v => v > 0);
-    if (!hasData) { card.style.display = 'none'; return; }
+    if (!hasData) { card.classList.add('hidden'); return; }
 
-    card.style.display = '';
+    card.classList.remove('hidden');
     const labels = {
       iron_mg: 'Fer', zinc_mg: 'Zinc', calcium_mg: 'Calcium', magnesium_mg: 'Magn\u00e9sium',
       potassium_mg: 'Potassium', vit_a_mcg: 'Vit A', vit_c_mg: 'Vit C', vit_d_ui: 'Vit D',
@@ -1513,11 +759,14 @@ async function loadMicros(date) {
       const rda = data.rda[key];
       if (!rda) continue;
       const pct = Math.min(Math.round((val / rda.value) * 100), 200);
-      const cls = pct < 50 ? 'low' : pct <= 120 ? 'good' : 'high';
-      html += `<div class="micro-row">
-        <span>${label}</span>
-        <span>${val} / ${rda.value} ${rda.unit}
-          <span class="micro-bar"><span class="micro-fill ${cls}" style="width:${Math.min(pct,100)}%"></span></span>
+      const barColor = pct < 50 ? 'bg-orange-400' : pct <= 120 ? 'bg-green-400' : 'bg-blue-400';
+      html += `<div class="flex justify-between items-center text-[0.75rem] py-0.5 border-b border-gray-50 last:border-none">
+        <span class="truncate min-w-0">${label}</span>
+        <span class="flex items-center gap-1.5 shrink-0">
+          ${val} / ${rda.value} ${rda.unit}
+          <span class="inline-block w-14 h-1.5 bg-gray-200 rounded overflow-hidden">
+            <span class="block h-full rounded ${barColor} transition-all" style="width:${Math.min(pct,100)}%"></span>
+          </span>
         </span>
       </div>`;
     }
@@ -1536,15 +785,14 @@ async function toggleSupp(id, checkbox) {
       body: JSON.stringify({ supplement_id: id })
     });
     const data = await res.json();
-    const label = checkbox.closest('.supp-check');
+    const label = checkbox.closest('label');
     if (data.taken) {
-      label.classList.add('taken');
-      const timeEl = label.querySelector('.supp-time');
+      label.classList.add('opacity-50', 'line-through');
+      const timeEl = label.querySelector('.text-gray-300');
       if (timeEl && data.taken_at) timeEl.textContent = data.taken_at.substring(0,5);
     } else {
-      label.classList.remove('taken');
+      label.classList.remove('opacity-50', 'line-through');
     }
-    // Re-sync the other list (sidebar vs mobile tab)
     loadDashboard(dashDate);
   } catch (e) {
     checkbox.checked = !checkbox.checked;
@@ -1558,13 +806,13 @@ function showActivityInput() {
   const card = document.getElementById('activityData');
   const btn = card.querySelector('button[onclick="showActivityInput()"]');
   if (!btn) return;
-  btn.outerHTML = `<div style="padding:8px;background:#f8f8f6;border-radius:12px;margin:8px 0">
-    <div style="display:flex;gap:6px;margin-bottom:6px">
-      <input type="number" id="inputSteps" placeholder="Pas" style="flex:1;min-width:0;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:0.8rem">
-      <input type="number" id="inputCal" placeholder="Kcal" style="flex:1;min-width:0;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:0.8rem">
-      <input type="number" id="inputMin" placeholder="Min" style="flex:1;min-width:0;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:0.8rem">
+  btn.outerHTML = `<div class="p-2 bg-gray-50 rounded-xl my-2">
+    <div class="flex gap-1.5 mb-1.5">
+      <input type="number" id="inputSteps" placeholder="Pas" class="flex-1 min-w-0 px-2 py-2 border border-gray-300 rounded-lg text-xs outline-none focus:border-coach-500">
+      <input type="number" id="inputCal" placeholder="Kcal" class="flex-1 min-w-0 px-2 py-2 border border-gray-300 rounded-lg text-xs outline-none focus:border-coach-500">
+      <input type="number" id="inputMin" placeholder="Min" class="flex-1 min-w-0 px-2 py-2 border border-gray-300 rounded-lg text-xs outline-none focus:border-coach-500">
     </div>
-    <button onclick="saveActivity()" style="width:100%;padding:8px;background:#4CAF50;color:white;border:none;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer">Enregistrer</button>
+    <button onclick="saveActivity()" class="w-full py-2 bg-coach-500 text-white border-none rounded-lg text-xs font-semibold cursor-pointer hover:bg-coach-600 transition-colors">Enregistrer</button>
   </div>`;
   document.getElementById('inputSteps').focus();
 }

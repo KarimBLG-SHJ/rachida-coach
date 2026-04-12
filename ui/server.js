@@ -94,7 +94,7 @@ app.post('/api/chat', async (req, res) => {
 
 // ── API: Get dashboard data ─────────────────
 app.get('/api/dashboard', (req, res) => {
-  res.json(getDashboardData());
+  res.json(getDashboardData(req.query.date));
 });
 
 // ── API: Toggle supplement taken ─────────────
@@ -417,10 +417,22 @@ function buildWeeklyPrompt() {
 }
 
 // ── Dashboard data builder ──────────────────
-function getDashboardData() {
+function getDashboardData(dateParam) {
+  const today = dateParam || new Date().toISOString().split('T')[0];
   const targets = getTodayTargets();
-  const consumed = getTodayConsumed();
-  const today = new Date().toISOString().split('T')[0];
+  const consumed = dateParam
+    ? (() => {
+        const row = db.prepare(`
+          SELECT
+            COALESCE(SUM(calories), 0) as calories,
+            COALESCE(SUM(protein_g), 0) as protein_g,
+            COALESCE(SUM(fat_g), 0) as fat_g,
+            COALESCE(SUM(carbs_g), 0) as carbs_g
+          FROM meal_log WHERE date = ?
+        `).get(dateParam);
+        return row;
+      })()
+    : getTodayConsumed();
 
   const meals = db.prepare(
     'SELECT meal_type, description, calories, protein_g, fat_g, carbs_g, time FROM meal_log WHERE date = ? ORDER BY time ASC'
