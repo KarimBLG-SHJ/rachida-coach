@@ -8,7 +8,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import db from '../db/connection.js';
-import { logMeal, generateMorningBrief, chat } from '../agent/coach.js';
+import { logMeal, analyzeMeal, generateMorningBrief, chat } from '../agent/coach.js';
 import { getTodayTargets, getTodayConsumed } from '../agent/macros.js';
 import { listMedications, addMedication, formatMedicationSchedule } from '../commands/medications.js';
 import { formatSchedule as formatSupplements } from '../commands/supplement-check.js';
@@ -155,6 +155,45 @@ app.delete('/api/meal/last', (req, res) => {
 app.delete('/api/meal/:id', (req, res) => {
   const result = db.prepare('DELETE FROM meal_log WHERE id = ?').run(req.params.id);
   res.json({ deleted: result.changes > 0, id: req.params.id });
+});
+
+// ── API: Edit meal (re-analyze with Claude) ─
+app.put('/api/meal/:id', async (req, res) => {
+  const { id } = req.params;
+  const { description } = req.body;
+
+  if (!description) {
+    return res.status(400).json({ error: 'description requise' });
+  }
+
+  try {
+    const analysis = await analyzeMeal(description);
+    const t = analysis.totals;
+    const mealName = analysis.items.map(i => i.name).join(', ');
+
+    db.prepare(`
+      UPDATE meal_log SET
+        description = ?, meal_name = ?, calories = ?, protein_g = ?, fat_g = ?, carbs_g = ?, fiber_g = ?,
+        iron_mg = ?, zinc_mg = ?, calcium_mg = ?, magnesium_mg = ?, potassium_mg = ?,
+        vit_a_mcg = ?, vit_c_mg = ?, vit_d_ui = ?,
+        vit_b12_mcg = ?, vit_b9_mcg = ?, selenium_mcg = ?,
+        is_halal = ?
+      WHERE id = ?
+    `).run(
+      mealName, mealName,
+      t.calories, t.protein_g, t.fat_g, t.carbs_g, t.fiber_g || 0,
+      t.iron_mg || 0, t.zinc_mg || 0, t.calcium_mg || 0, t.magnesium_mg || 0, t.potassium_mg || 0,
+      t.vit_a_mcg || 0, t.vit_c_mg || 0, t.vit_d_ui || 0,
+      t.vit_b12_mcg || 0, t.vit_b9_mcg || 0, t.selenium_mcg || 0,
+      analysis.items.every(i => i.is_halal) ? 1 : 0,
+      id
+    );
+
+    res.json({ success: true, meal: { id, description: mealName, ...t } });
+  } catch (err) {
+    console.error('[PUT /api/meal]', err.message);
+    res.status(500).json({ error: 'Erreur lors de la modification' });
+  }
 });
 
 // ── API: Get days with meals (for calendar) ─

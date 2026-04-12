@@ -652,7 +652,7 @@ function renderMeals(meals) {
     return `<div class="text-sm py-1.5 border-b border-gray-100 last:border-none flex flex-col gap-0.5 break-words">
       <div class="flex justify-between items-center">
         <strong>${emoji} ${title}</strong>
-        <span class="shrink-0">${Math.round(m.calories)} kcal <button onclick="deleteMeal(${m.id})" class="bg-transparent border-none cursor-pointer text-[0.7rem] px-1.5 py-0.5 rounded text-red-300 hover:bg-red-50 transition-colors">\uD83D\uDDD1\uFE0F</button></span>
+        <span class="shrink-0">${Math.round(m.calories)} kcal <button onclick="editMeal(${m.id}, '${m.description.replace(/'/g, "\\'")}')" class="bg-transparent border-none cursor-pointer text-[0.7rem] px-1.5 py-0.5 rounded text-gray-300 hover:bg-blue-50 transition-colors" title="Modifier">&#9998;&#65039;</button><button onclick="deleteMeal(${m.id})" class="bg-transparent border-none cursor-pointer text-[0.7rem] px-1.5 py-0.5 rounded text-red-300 hover:bg-red-50 transition-colors" title="Supprimer">\uD83D\uDDD1\uFE0F</button></span>
       </div>
       <div class="text-[0.72rem] text-gray-400">${desc}</div>
     </div>`;
@@ -730,6 +730,36 @@ async function deleteMeal(id) {
       loadDashboard();
     } catch(e) {}
   });
+}
+
+/* ==========================================================
+   EDIT MEAL
+   ========================================================== */
+async function editMeal(id, currentDesc) {
+  const desc = prompt('Modifier le repas :\n(description actuelle: ' + currentDesc + ')', currentDesc);
+  if (!desc || desc === currentDesc) return;
+
+  const loadingEl = addMessage('Reanalyse du repas...', 'loading');
+  try {
+    const res = await fetch('/api/meal/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description: desc })
+    });
+    loadingEl.remove();
+
+    if (res.ok) {
+      addMessage('Repas modifié et recalculé !', 'system');
+      loadDay(selectedDate);
+      loadDashboard(dashDate);
+    } else {
+      const err = await res.json();
+      addMessage('Erreur : ' + (err.error || 'inconnue'), 'system');
+    }
+  } catch (e) {
+    loadingEl.remove();
+    addMessage('Erreur lors de la modification', 'system');
+  }
 }
 
 /* ==========================================================

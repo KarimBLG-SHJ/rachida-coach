@@ -329,7 +329,9 @@ NE RÉPÈTE PAS ce que tu as dit dans les messages précédents. Varie tes exemp
 // MEAL LOGGING
 // ─────────────────────────────────────────────
 
-export async function logMeal(description, mealType = 'lunch', imageBase64 = null) {
+// analyzeMeal — Claude analysis only, no DB insert
+// Used by logMeal and PUT /api/meal/:id
+export async function analyzeMeal(description, imageBase64 = null) {
   const targets = getTodayTargets();
   const consumed = getTodayConsumed();
   const remaining = getRemainingToday();
@@ -343,7 +345,6 @@ Contexte de sa journée :
 - Déjà consommé : ${consumed.calories} kcal
 - Protéines restantes : ${remaining.protein_g}g
 - Glucides restants : ${remaining.carbs_g}g
-- Type de repas : ${mealType}
 
 Fais exactement ceci :
 
@@ -412,7 +413,6 @@ Réponds UNIQUEMENT avec du JSON dans ce format exact :
 }
 `;
 
-  // Build message content — text only or image + text
   const messageContent = [];
   if (imageBase64) {
     const mediaType = imageBase64.startsWith('/9j/') ? 'image/jpeg' : 'image/png';
@@ -431,21 +431,27 @@ Réponds UNIQUEMENT avec du JSON dans ce format exact :
   });
 
   const rawText = response.content[0].text.replace(/```json|```/g, '').trim();
-  const data = JSON.parse(rawText);
+  return JSON.parse(rawText);
+}
+
+export async function logMeal(description, mealType = 'lunch', imageBase64 = null) {
+  const targets = getTodayTargets();
+  const consumed = getTodayConsumed();
+
+  const data = await analyzeMeal(description, imageBase64);
 
   // Save to database
   const today = new Date().toISOString().split('T')[0];
   const time = new Date().toTimeString().split(' ')[0];
-  // Always use the identified food names as description (clean, like Foodvisor)
   const mealDescription = data.items.map(i => i.name).join(', ');
 
   const t = data.totals;
   db.prepare(`
-    INSERT INTO meal_log (date, time, meal_type, description, calories, protein_g, fat_g, carbs_g, fiber_g, is_halal,
+    INSERT INTO meal_log (date, time, meal_type, description, meal_name, calories, protein_g, fat_g, carbs_g, fiber_g, is_halal,
       iron_mg, zinc_mg, calcium_mg, magnesium_mg, potassium_mg, vit_a_mcg, vit_c_mg, vit_d_ui, vit_b12_mcg, vit_b9_mcg, selenium_mcg)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
-    today, time, mealType, mealDescription,
+    today, time, mealType, mealDescription, mealDescription,
     t.calories, t.protein_g, t.fat_g, t.carbs_g, t.fiber_g || 0,
     data.items.every(i => i.is_halal) ? 1 : 0,
     t.iron_mg || 0, t.zinc_mg || 0, t.calcium_mg || 0, t.magnesium_mg || 0, t.potassium_mg || 0,

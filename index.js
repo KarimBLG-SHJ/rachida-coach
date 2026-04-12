@@ -8,6 +8,7 @@ import { dirname, join } from 'path';
 import { createInterface } from 'readline';
 import chalk from 'chalk';
 import db from './db/connection.js';
+import { runMigrations } from './db/migrate.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -27,6 +28,9 @@ const args = process.argv.slice(2);
 const command = args[0];
 
 async function main() {
+  // Run DB migrations before anything else
+  runMigrations();
+
   switch (command) {
 
     case undefined:
