@@ -425,13 +425,27 @@ Réponds UNIQUEMENT avec du JSON dans ce format exact :
 
   const response = await getClient().messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 1500,
+    max_tokens: 4000,
     system: systemPrompt,
     messages: [{ role: 'user', content: messageContent }]
   });
 
-  const rawText = response.content[0].text.replace(/```json|```/g, '').trim();
-  return JSON.parse(rawText);
+  let rawText = response.content[0].text.replace(/```json|```/g, '').trim();
+
+  // Fix common JSON issues: trailing commas before } or ]
+  rawText = rawText.replace(/,\s*([}\]])/g, '$1');
+
+  try {
+    return JSON.parse(rawText);
+  } catch (e) {
+    // Try to extract JSON object from the response
+    const match = rawText.match(/\{[\s\S]*\}/);
+    if (match) {
+      const cleaned = match[0].replace(/,\s*([}\]])/g, '$1');
+      return JSON.parse(cleaned);
+    }
+    throw new Error(`JSON invalide de Claude: ${e.message}`);
+  }
 }
 
 export async function logMeal(description, mealType = 'lunch', imageBase64 = null) {
