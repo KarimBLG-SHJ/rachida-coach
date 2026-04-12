@@ -888,7 +888,7 @@
   </div>
 
   <div class="chat-messages" id="messages">
-    <div class="msg system">Salut Rachida ! Dis-moi ce que tu as mangé, pose-moi une question, ou dis-moi tes médicaments — je suis là 😊</div>
+    <div class="msg system" id="welcomeMsg">Salut Rachida ! 😊</div>
   </div>
 
   <div class="quick-actions" style="overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none">
@@ -1516,7 +1516,18 @@ async function loadWeekly() {
 loadDashboard();
 buildDayNav();
 loadMicros();
+loadProactiveMessage();
 inputEl.focus();
+
+async function loadProactiveMessage() {
+  try {
+    const res = await fetch('/api/proactive');
+    const data = await res.json();
+    if (data.message) {
+      document.getElementById('welcomeMsg').textContent = data.message;
+    }
+  } catch(e) {}
+}
 </script>
 </body>
 </html>

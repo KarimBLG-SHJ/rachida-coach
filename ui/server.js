@@ -309,6 +309,77 @@ app.get('/api/withings/sync', async (req, res) => {
   }
 });
 
+// ── API: Proactive message (what's missing?) ──
+app.get('/api/proactive', (req, res) => {
+  const today = new Date().toISOString().split('T')[0];
+  const hour = new Date().getHours();
+
+  // Check what meals are logged today
+  const meals = db.prepare(
+    'SELECT meal_type FROM meal_log WHERE date = ? GROUP BY meal_type'
+  ).all(today);
+  const logged = new Set(meals.map(m => m.meal_type));
+
+  // Check supplements
+  const suppsTaken = db.prepare(
+    'SELECT COUNT(*) as count FROM supplement_log WHERE date = ? AND taken = 1'
+  ).get(today);
+
+  // Build proactive message
+  let message = 'Salut Rachida ! 😊 ';
+
+  // Morning (before 10am) — ask about breakfast
+  if (hour < 10) {
+    if (!logged.has('breakfast')) {
+      message += "Tu as pris ton petit-déj ? Dis-moi ce que tu as mangé pour que je note 🍳";
+    } else if (suppsTaken.count === 0) {
+      message += "T'as mangé, bien ! N'oublie pas tes compléments du matin 💊";
+    } else {
+      message += "Bonne matinée ma belle ! Tout est noté ✅";
+    }
+  }
+  // Midday (10am-2pm) — ask about lunch
+  else if (hour >= 10 && hour < 14) {
+    if (!logged.has('lunch')) {
+      message += "C'est l'heure du déj ! Dis-moi ce que tu manges ou prends ton plat en photo 📸";
+    } else {
+      message += "Ton déjeuner est noté. Comment tu te sens cet après-midi ?";
+    }
+  }
+  // Afternoon (2pm-6pm) — check protein status
+  else if (hour >= 14 && hour < 18) {
+    const consumed = db.prepare(
+      'SELECT COALESCE(SUM(protein_g),0) as prot FROM meal_log WHERE date = ?'
+    ).get(today);
+    if (consumed.prot < 60) {
+      message += "Tes protéines sont basses pour l'instant. Un snack riche en protéines ? Yaourt grec, œuf dur, amandes 🥜";
+    } else if (!logged.has('lunch')) {
+      message += "T'as pas noté ton déjeuner — tu as mangé quoi ce midi ?";
+    } else {
+      message += "L'après-midi avance bien. Besoin d'un conseil ?";
+    }
+  }
+  // Evening (6pm-9pm) — ask about dinner
+  else if (hour >= 18 && hour < 21) {
+    if (!logged.has('dinner')) {
+      message += "C'est le soir — qu'est-ce que tu manges ? Dis-moi ou prends en photo 📸";
+    } else {
+      message += "Ton dîner est noté. Pense à ton magnésium avant de dormir 🌙";
+    }
+  }
+  // Night (after 9pm)
+  else {
+    const totalMeals = meals.length;
+    if (totalMeals === 0) {
+      message += "Tu n'as rien noté aujourd'hui. C'est pas grave, on recommence demain 💪";
+    } else {
+      message += "Bonne soirée ma belle. N'oublie pas ton magnésium avant de dormir 🌙";
+    }
+  }
+
+  res.json({ message });
+});
+
 // ── API: Morning brief ──────────────────────
 app.get('/api/brief', async (req, res) => {
   try {
