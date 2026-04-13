@@ -190,26 +190,40 @@ export async function syncActivity(days = 7) {
   const activities = await getActivity(days);
   if (!activities || activities.length === 0) return null;
 
-  let count = 0;
+  // Today in Dubai — skip any partial day data
+  const todayDubai = new Date().toLocaleString('en-CA', {
+    timeZone: 'Asia/Dubai', year: 'numeric', month: '2-digit', day: '2-digit'
+  });
+
+  let count = 0, skipped = 0;
   for (const a of activities) {
-    const existing = db.prepare(
-      "SELECT id FROM activity_log WHERE date = ? AND source = 'withings'"
+    // Skip today (partial data) and any future date
+    if (a.date >= todayDubai) { skipped++; continue; }
+
+    // Skip empty days (no steps at all = probably a day she didn't wear the watch/scale)
+    if (!a.steps || a.steps < 100) { skipped++; continue; }
+
+    // If we already have better data for this date (from any source), don't overwrite
+    const best = db.prepare(
+      'SELECT steps FROM activity_log WHERE date = ? ORDER BY steps DESC LIMIT 1'
     ).get(a.date);
 
-    if (!existing) {
-      db.prepare(`
-        INSERT INTO activity_log (date, steps, active_calories, total_calories, exercise_minutes, distance_km, source)
-        VALUES (?, ?, ?, ?, ?, ?, 'withings')
-      `).run(a.date, a.steps, a.active_calories, a.total_calories,
-        a.moderate_activity_min + a.intense_activity_min,
-        Math.round(a.distance_m / 10) / 100, // meters to km
-      );
-      count++;
-    }
+    if (best && best.steps >= a.steps) { skipped++; continue; }
+
+    // Replace any existing Withings row for this date, keep other sources
+    db.prepare("DELETE FROM activity_log WHERE date = ? AND source = 'withings'").run(a.date);
+    db.prepare(`
+      INSERT INTO activity_log (date, steps, active_calories, total_calories, exercise_minutes, distance_km, source)
+      VALUES (?, ?, ?, ?, ?, ?, 'withings')
+    `).run(a.date, a.steps, a.active_calories, a.total_calories,
+      a.moderate_activity_min + a.intense_activity_min,
+      Math.round(a.distance_m / 10) / 100,
+    );
+    count++;
   }
 
-  console.log(`[Withings] Synced ${count} activity days`);
-  return { synced: count, activities };
+  console.log(`[Withings] Activity synced: ${count} jours (${skipped} ignorés)`);
+  return { synced: count, skipped, activities };
 }
 
 /**

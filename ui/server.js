@@ -282,19 +282,53 @@ app.get('/api/activity/yesterday', (req, res) => {
   res.json({ data, date: yesterday });
 });
 
+// Date helpers — Rachida lives in Dubai (UTC+4), never use UTC for "today"
+function dubaiDate(d = new Date()) {
+  const s = d.toLocaleString('en-CA', { timeZone: 'Asia/Dubai', year: 'numeric', month: '2-digit', day: '2-digit' });
+  return s; // YYYY-MM-DD
+}
+
 // ── API: Receive Apple Health data (from iOS Shortcut) ──
 app.post('/api/activity', (req, res) => {
   try {
     const { steps, active_calories, exercise_minutes, resting_heart_rate, date } = req.body;
-    const today = date || new Date().toISOString().split('T')[0];
 
+    // Validate date: must be YYYY-MM-DD, not in the future, not older than 60 days
+    const targetDate = date || dubaiDate();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+      return res.status(400).json({ error: 'date invalide (attendu YYYY-MM-DD)' });
+    }
+    const today = dubaiDate();
+    if (targetDate > today) {
+      return res.status(400).json({ error: 'date dans le futur refusée', date: targetDate });
+    }
+    const daysOld = (new Date(today) - new Date(targetDate)) / 86400000;
+    if (daysOld > 60) {
+      return res.status(400).json({ error: 'date trop ancienne (>60j)', date: targetDate });
+    }
+
+    const newSteps = steps || 0;
+    const newCal = active_calories || 0;
+
+    // Don't downgrade: if we already have better data for this date, skip
+    const existing = db.prepare(
+      'SELECT steps, active_calories FROM activity_log WHERE date = ? ORDER BY steps DESC LIMIT 1'
+    ).get(targetDate);
+
+    if (existing && existing.steps > newSteps && existing.active_calories >= newCal) {
+      console.log(`[Activity] ${targetDate}: skipped (existing ${existing.steps} pas > incoming ${newSteps})`);
+      return res.json({ saved: false, reason: 'existing_data_better', date: targetDate });
+    }
+
+    // Replace the apple_watch_shortcut row for that date (keep other sources intact)
+    db.prepare("DELETE FROM activity_log WHERE date = ? AND source = 'apple_watch_shortcut'").run(targetDate);
     db.prepare(`
-      INSERT OR REPLACE INTO activity_log (date, steps, active_calories, exercise_minutes, resting_heart_rate, source)
+      INSERT INTO activity_log (date, steps, active_calories, exercise_minutes, resting_heart_rate, source)
       VALUES (?, ?, ?, ?, ?, 'apple_watch_shortcut')
-    `).run(today, steps || 0, active_calories || 0, exercise_minutes || 0, resting_heart_rate || null);
+    `).run(targetDate, newSteps, newCal, exercise_minutes || 0, resting_heart_rate || null);
 
-    console.log(`[Activity] ${today}: ${steps} pas, ${active_calories} kcal, ${exercise_minutes} min`);
-    res.json({ saved: true, date: today, steps, active_calories, exercise_minutes });
+    console.log(`[Activity] ${targetDate}: ${newSteps} pas, ${newCal} kcal, ${exercise_minutes || 0} min`);
+    res.json({ saved: true, date: targetDate, steps: newSteps, active_calories: newCal, exercise_minutes });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
