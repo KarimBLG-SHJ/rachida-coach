@@ -504,15 +504,18 @@ function getDashboardData(dateParam) {
     taken_at: takenMap.get(s.id) || null
   }));
 
-  // Activity data (Withings / Apple Watch)
+  // Activity data — she weighs in the morning, so the relevant activity is YESTERDAY
+  const yesterdayDate = new Date(new Date(today).getTime() - 86400000).toISOString().split('T')[0];
   const todayActivity = db.prepare(
-    'SELECT steps, active_calories, exercise_minutes, distance_km FROM activity_log WHERE date = ? LIMIT 1'
-  ).get(today);
+    `SELECT date, steps, active_calories, total_calories, exercise_minutes, stand_hours,
+            resting_heart_rate, avg_heart_rate, distance_km
+     FROM activity_log WHERE date = ? LIMIT 1`
+  ).get(yesterdayDate);
 
   const weekActivity = db.prepare(`
-    SELECT date, steps, active_calories FROM activity_log
-    WHERE date >= date('now', '-30 days') ORDER BY date ASC
-  `).all();
+    SELECT date, steps, active_calories, exercise_minutes, distance_km FROM activity_log
+    WHERE date >= date(?, '-30 days') AND date <= ? ORDER BY date ASC
+  `).all(yesterdayDate, yesterdayDate);
 
   return {
     date: today,

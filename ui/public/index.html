@@ -277,50 +277,78 @@ function updateDashboard(d) {
     }
   }
 
-  // -- 2. Activity today + 30-day bar chart --
+  // -- 2. Activity (YESTERDAY — she weighs in the morning) + 30-day bar chart --
   if (d.activity || (d.weekActivity && d.weekActivity.length > 0)) {
     document.getElementById('activityCard').classList.remove('hidden');
-    let html = '';
     const act = d.activity;
-    const hasToday = act && (act.steps > 0 || act.active_calories > 0);
+    const hasData = act && (act.steps > 0 || act.active_calories > 0);
+    let html = '';
 
-    if (hasToday) {
-      document.getElementById('activityLabel').textContent = "aujourd'hui";
-      const dist = act.distance_km ? `<div class="text-center"><div class="text-xl font-bold">${act.distance_km.toFixed(1)}</div><div class="text-[0.7rem] text-gray-500">km</div></div>` : '';
-      html += `<div class="flex justify-around text-center mb-2">
-        <div><div class="text-xl font-bold">${(act.steps||0).toLocaleString('fr-FR')}</div><div class="text-[0.7rem] text-gray-500">pas</div></div>
-        <div><div class="text-xl font-bold">${Math.round(act.active_calories||0)}</div><div class="text-[0.7rem] text-gray-500">kcal</div></div>
-        <div><div class="text-xl font-bold">${act.exercise_minutes||0}</div><div class="text-[0.7rem] text-gray-500">min</div></div>
-        ${dist}
+    if (hasData) {
+      const dateLabel = act.date
+        ? new Date(act.date + 'T12:00').toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'short'})
+        : 'hier';
+      document.getElementById('activityLabel').textContent = `hier (${dateLabel})`;
+
+      // Primary stats — big, readable
+      html += `<div class="grid grid-cols-2 gap-2 mb-3">
+        <div class="bg-blue-50 rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-blue-600">${(act.steps||0).toLocaleString('fr-FR')}</div>
+          <div class="text-xs text-gray-500 mt-0.5">pas</div>
+        </div>
+        <div class="bg-orange-50 rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-orange-600">${Math.round(act.active_calories||0)}</div>
+          <div class="text-xs text-gray-500 mt-0.5">kcal actives</div>
+        </div>
       </div>`;
-    } else if (d.weekActivity && d.weekActivity.length > 0) {
-      const yesterday = d.weekActivity[d.weekActivity.length - 1];
-      if (yesterday && yesterday.steps > 0) {
-        document.getElementById('activityLabel').textContent = "hier";
-        html += `<div class="flex justify-around text-center mb-2">
-          <div><div class="text-xl font-bold">${(yesterday.steps||0).toLocaleString('fr-FR')}</div><div class="text-[0.7rem] text-gray-500">pas</div></div>
-          <div><div class="text-xl font-bold">${Math.round(yesterday.active_calories||0)}</div><div class="text-[0.7rem] text-gray-500">kcal</div></div>
-        </div>`;
+
+      // Secondary stats — compact grid, only show fields we have
+      const secondary = [];
+      if (act.distance_km) secondary.push({ val: act.distance_km.toFixed(1), unit: 'km', label: 'distance' });
+      if (act.exercise_minutes) secondary.push({ val: act.exercise_minutes, unit: 'min', label: 'exercice' });
+      if (act.stand_hours) secondary.push({ val: act.stand_hours, unit: 'h', label: 'debout' });
+      if (act.total_calories) secondary.push({ val: Math.round(act.total_calories), unit: 'kcal', label: 'total' });
+      if (act.resting_heart_rate) secondary.push({ val: act.resting_heart_rate, unit: 'bpm', label: 'FC repos' });
+      if (act.avg_heart_rate) secondary.push({ val: act.avg_heart_rate, unit: 'bpm', label: 'FC moy.' });
+
+      if (secondary.length > 0) {
+        html += `<div class="grid grid-cols-3 gap-1.5 mb-3">`;
+        secondary.forEach(s => {
+          html += `<div class="bg-gray-50 rounded-lg p-2 text-center">
+            <div class="text-sm font-semibold text-gray-800">${s.val}<span class="text-[0.6rem] text-gray-400 ml-0.5">${s.unit}</span></div>
+            <div class="text-[0.65rem] text-gray-500 mt-0.5">${s.label}</div>
+          </div>`;
+        });
+        html += `</div>`;
       }
+    } else {
+      document.getElementById('activityLabel').textContent = 'hier';
+      html += `<div class="text-center text-xs text-gray-400 py-3">Pas de données pour hier.<br>Synchronise Apple Watch ou ajoute manuellement.</div>`;
     }
 
-    // Manual activity input button
-    html += `<div class="text-center my-2">
-      <button onclick="showActivityInput()" class="bg-transparent border border-gray-300 rounded-full px-3.5 py-1 text-[0.7rem] text-gray-500 cursor-pointer hover:border-coach-500 hover:text-coach-500 transition-colors">+ Ajouter activite</button>
+    // Manual input button
+    html += `<div class="text-center mb-2">
+      <button onclick="showActivityInput()" class="bg-transparent border border-gray-300 rounded-full px-3.5 py-1 text-[0.7rem] text-gray-500 cursor-pointer hover:border-coach-500 hover:text-coach-500 transition-colors">+ Ajouter activité</button>
     </div>`;
 
+    // 30-day bar chart with yesterday highlighted
     if (d.weekActivity && d.weekActivity.length > 0) {
       const maxSteps = Math.max(...d.weekActivity.map(a => a.steps || 0));
+      const avgSteps = Math.round(d.weekActivity.reduce((s, a) => s + (a.steps || 0), 0) / d.weekActivity.length);
       const barH = 44;
-      html += `<div class="flex items-end gap-0.5 mt-2" style="height:${barH + 14}px">`;
+      html += `<div class="text-[0.7rem] text-gray-500 mb-1 flex justify-between">
+        <span>30 derniers jours</span>
+        <span>moy. ${avgSteps.toLocaleString('fr-FR')} pas/j</span>
+      </div>`;
+      html += `<div class="flex items-end gap-0.5" style="height:${barH + 14}px">`;
       d.weekActivity.forEach((a, i) => {
         const steps = a.steps || 0;
         const h = maxSteps > 0 ? Math.max(3, Math.round((steps / maxSteps) * barH)) : 3;
-        const isToday = i === d.weekActivity.length - 1;
-        const color = isToday ? '#42A5F5' : '#66BB6A';
-        const opacity = isToday ? '1' : '0.7';
+        const isYesterday = i === d.weekActivity.length - 1;
+        const color = isYesterday ? '#42A5F5' : '#66BB6A';
+        const opacity = isYesterday ? '1' : '0.7';
         const day = new Date(a.date + 'T12:00').toLocaleDateString('fr-FR', {weekday:'narrow'});
-        const showLabel = d.weekActivity.length <= 14 || i % 3 === 0 || isToday;
+        const showLabel = d.weekActivity.length <= 14 || i % 3 === 0 || isYesterday;
         html += `<div class="flex-1 text-center" title="${a.date}: ${steps.toLocaleString('fr-FR')} pas / ${Math.round(a.active_calories||0)} kcal">
           <div style="background:${color};opacity:${opacity};border-radius:2px;height:${h}px;margin:0 auto;width:80%"></div>
           <div class="text-[0.5rem] text-gray-400 mt-0.5">${showLabel ? day : ''}</div>
