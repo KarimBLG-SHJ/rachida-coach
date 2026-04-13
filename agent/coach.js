@@ -123,6 +123,22 @@ const COACH_TOOLS = [
     }
   },
   {
+    name: 'update_last_meal',
+    description: "Recalculer et METTRE À JOUR le dernier repas enregistré quand Rachida corrige (ex: 'en fait y'avait pas de fromage', 'c'était moins que ça', 'j'ai oublié j'ai mangé aussi X'). Tu DOIS utiliser cet outil, ne dis jamais 'j'ai ajusté' sans l'appeler. Passe la nouvelle description COMPLÈTE du repas corrigé, pas juste la correction.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        new_description: { type: 'string', description: "La description complète et corrigée du repas (tous les aliments, quantités si mentionnées)" }
+      },
+      required: ['new_description']
+    }
+  },
+  {
+    name: 'delete_last_meal',
+    description: "Supprimer le dernier repas enregistré quand Rachida dit qu'elle s'est trompée, qu'elle n'a pas mangé, ou qu'elle veut annuler l'entrée.",
+    input_schema: { type: 'object', properties: {} }
+  },
+  {
     name: 'mark_medication_taken',
     description: "Marquer un médicament comme pris. Utilise quand Rachida dit 'j'ai pris mon Glucophage', etc.",
     input_schema: {
@@ -139,8 +155,42 @@ const COACH_TOOLS = [
 // TOOL EXECUTION
 // ─────────────────────────────────────────────
 
-function executeTool(toolName, input) {
+async function executeTool(toolName, input) {
   switch (toolName) {
+    case 'update_last_meal': {
+      const last = db.prepare('SELECT id, meal_type FROM meal_log ORDER BY id DESC LIMIT 1').get();
+      if (!last) return JSON.stringify({ error: 'aucun repas à mettre à jour' });
+      try {
+        const analysis = await analyzeMeal(input.new_description);
+        const t = analysis.totals;
+        const mealName = analysis.items.map(i => i.name).join(', ');
+        db.prepare(`
+          UPDATE meal_log SET
+            description = ?, meal_name = ?, calories = ?, protein_g = ?, fat_g = ?, carbs_g = ?, fiber_g = ?,
+            iron_mg = ?, zinc_mg = ?, calcium_mg = ?, magnesium_mg = ?, potassium_mg = ?,
+            vit_a_mcg = ?, vit_c_mg = ?, vit_d_ui = ?, vit_b12_mcg = ?, vit_b9_mcg = ?, selenium_mcg = ?,
+            is_halal = ?
+          WHERE id = ?
+        `).run(
+          mealName, mealName,
+          t.calories, t.protein_g, t.fat_g, t.carbs_g, t.fiber_g || 0,
+          t.iron_mg || 0, t.zinc_mg || 0, t.calcium_mg || 0, t.magnesium_mg || 0, t.potassium_mg || 0,
+          t.vit_a_mcg || 0, t.vit_c_mg || 0, t.vit_d_ui || 0,
+          t.vit_b12_mcg || 0, t.vit_b9_mcg || 0, t.selenium_mcg || 0,
+          analysis.items.every(i => i.is_halal) ? 1 : 0,
+          last.id
+        );
+        return JSON.stringify({ updated: true, id: last.id, new_totals: t, new_description: mealName });
+      } catch (e) {
+        return JSON.stringify({ error: e.message });
+      }
+    }
+    case 'delete_last_meal': {
+      const last = db.prepare('SELECT id, description FROM meal_log ORDER BY id DESC LIMIT 1').get();
+      if (!last) return JSON.stringify({ error: 'aucun repas à supprimer' });
+      db.prepare('DELETE FROM meal_log WHERE id = ?').run(last.id);
+      return JSON.stringify({ deleted: true, id: last.id, was: last.description });
+    }
     case 'save_medication': {
       const result = addMedication(input);
       return JSON.stringify(result);
@@ -642,7 +692,7 @@ export async function chat(userMessage, history = []) {
     const toolResults = [];
 
     for (const toolUse of toolUseBlocks) {
-      const result = executeTool(toolUse.name, toolUse.input);
+      const result = await executeTool(toolUse.name, toolUse.input);
       toolResults.push({
         type: 'tool_result',
         tool_use_id: toolUse.id,
