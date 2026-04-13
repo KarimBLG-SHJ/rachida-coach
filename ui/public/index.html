@@ -100,7 +100,13 @@ tailwind.config = {
 
       <!-- Activity Card -->
       <div class="hidden bg-sand-50 border border-gray-200 rounded-xl p-3.5 mb-3 w-full overflow-hidden" id="activityCard">
-        <h2 class="text-[0.75rem] text-gray-500 uppercase tracking-wide mb-2.5">&#128694;&#8205;&#9792;&#65039; Activite <span id="activityLabel" class="font-normal text-[0.65rem] text-gray-400"></span></h2>
+        <div class="flex items-baseline justify-between mb-3">
+          <div>
+            <div class="text-lg font-bold text-gray-900">&#128694;&#8205;&#9792;&#65039; Hier</div>
+            <div id="activityLabel" class="text-[0.7rem] text-gray-500 mt-0.5"></div>
+          </div>
+          <button onclick="syncWithings(this)" class="text-[0.7rem] text-coach-500 hover:text-coach-600 font-medium">&#128260; Sync</button>
+        </div>
         <div id="activityData" class="text-sm w-full overflow-hidden"></div>
       </div>
 
@@ -288,7 +294,7 @@ function updateDashboard(d) {
       const dateLabel = act.date
         ? new Date(act.date + 'T12:00').toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'short'})
         : 'hier';
-      document.getElementById('activityLabel').textContent = `hier (${dateLabel})`;
+      document.getElementById('activityLabel').textContent = dateLabel;
 
       // Primary stats — big, readable
       html += `<div class="grid grid-cols-2 gap-2 mb-3">
@@ -322,7 +328,7 @@ function updateDashboard(d) {
         html += `</div>`;
       }
     } else {
-      document.getElementById('activityLabel').textContent = 'hier';
+      document.getElementById('activityLabel').textContent = '';
       html += `<div class="text-center text-xs text-gray-400 py-3">Pas de données pour hier.<br>Synchronise Apple Watch ou ajoute manuellement.</div>`;
     }
 
@@ -866,6 +872,27 @@ function showActivityInput() {
     <button onclick="saveActivity()" class="w-full py-2 bg-coach-500 text-white border-none rounded-lg text-xs font-semibold cursor-pointer hover:bg-coach-600 transition-colors">Enregistrer</button>
   </div>`;
   document.getElementById('inputSteps').focus();
+}
+
+async function syncWithings(btn) {
+  const original = btn.innerHTML;
+  btn.innerHTML = '\u23F3 Sync...';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/withings/sync');
+    const data = await r.json();
+    if (data.error) {
+      btn.innerHTML = '\u274C ' + (data.error.includes('token') ? 'Reconnecte' : 'Erreur');
+      setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 3000);
+      return;
+    }
+    btn.innerHTML = '\u2705 OK';
+    loadDashboard();
+    setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 2000);
+  } catch(e) {
+    btn.innerHTML = '\u274C';
+    setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 2000);
+  }
 }
 
 async function saveActivity() {

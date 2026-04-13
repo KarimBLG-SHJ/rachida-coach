@@ -506,15 +506,20 @@ function getDashboardData(dateParam) {
 
   // Activity data — she weighs in the morning, so the relevant activity is YESTERDAY
   const yesterdayDate = new Date(new Date(today).getTime() - 86400000).toISOString().split('T')[0];
+  // When multiple sources exist for the same date, keep the row with the highest step count
   const todayActivity = db.prepare(
     `SELECT date, steps, active_calories, total_calories, exercise_minutes, stand_hours,
             resting_heart_rate, avg_heart_rate, distance_km
-     FROM activity_log WHERE date = ? LIMIT 1`
+     FROM activity_log WHERE date = ?
+     ORDER BY steps DESC, active_calories DESC LIMIT 1`
   ).get(yesterdayDate);
 
   const weekActivity = db.prepare(`
-    SELECT date, steps, active_calories, exercise_minutes, distance_km FROM activity_log
-    WHERE date >= date(?, '-30 days') AND date <= ? ORDER BY date ASC
+    SELECT date, MAX(steps) as steps, MAX(active_calories) as active_calories,
+           MAX(exercise_minutes) as exercise_minutes, MAX(distance_km) as distance_km
+    FROM activity_log
+    WHERE date >= date(?, '-30 days') AND date <= ?
+    GROUP BY date ORDER BY date ASC
   `).all(yesterdayDate, yesterdayDate);
 
   return {
