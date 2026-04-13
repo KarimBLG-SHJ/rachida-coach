@@ -353,8 +353,7 @@ Fais exactement ceci :
 3. Calcule les calories et macros pour chaque aliment
 4. Additionne le total
 5. Montre le reste de la journée
-6. Propose ce qu'elle peut manger au prochain repas pour rester dans ses objectifs
-7. Si quelque chose semble potentiellement non-halal, signale-le clairement
+6. Si quelque chose semble potentiellement non-halal, signale-le clairement
 
 Réponds UNIQUEMENT avec du JSON dans ce format exact :
 {
@@ -407,9 +406,7 @@ Réponds UNIQUEMENT avec du JSON dans ce format exact :
     "protein_g": ${remaining.protein_g},
     "fat_g": ${remaining.fat_g},
     "carbs_g": ${remaining.carbs_g}
-  },
-  "next_meal_suggestion": "Description du repas suggéré",
-  "next_meal_why": "Explication courte (2 phrases max) du pourquoi"
+  }
 }
 `;
 
@@ -506,11 +503,6 @@ function formatMealResponse(data, mealType, targets, consumed) {
     output += `\nIl te reste ${remainingCal} kcal pour ce soir.\n`;
   } else {
     output += `\n⚠️ Tu as atteint ton objectif calorique pour aujourd'hui.\n`;
-  }
-
-  if (data.next_meal_suggestion) {
-    output += `\n💡 Prochain repas : ${data.next_meal_suggestion}\n`;
-    output += `   Pourquoi : ${data.next_meal_why}\n`;
   }
 
   return output;

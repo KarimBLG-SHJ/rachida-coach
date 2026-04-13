@@ -26,7 +26,6 @@ Heure : {TIME}
 5. Vérifie que tout est halal. Si un aliment est possiblement non-halal, signale-le
 6. Additionne les totaux
 7. Montre le reste de la journée
-8. Suggère le prochain repas pour rester dans les objectifs
 
 ## Format de réponse
 
@@ -80,9 +79,7 @@ Réponds UNIQUEMENT en JSON valide :
     "vit_b12_mcg": 1.0,
     "vit_b9_mcg": 25,
     "selenium_mcg": 20
-  },
-  "next_meal_suggestion": "Description concrète du repas suggéré",
-  "next_meal_why": "Explication courte (2 phrases max)"
+  }
 }
 ```
 

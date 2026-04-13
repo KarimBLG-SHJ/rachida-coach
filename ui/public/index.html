@@ -485,10 +485,6 @@ function addMealCard(text) {
   const calLine = lines.find(l => l.includes('Consomm\u00e9'));
   const resteLine = lines.find(l => l.includes('Il te reste'));
 
-  const tipIdx = lines.findIndex(l => l.includes('Prochain repas'));
-  const tipLine = tipIdx >= 0 ? lines[tipIdx].replace('\uD83D\uDCA1 ', '').replace('Prochain repas : ', '') : '';
-  const whyLine = lines[tipIdx + 1]?.replace('Pourquoi : ', '').trim() || '';
-
   const itemsDesc = items.map(i => `${i.name} (${i.qty}g)`).join(', ');
 
   const card = document.createElement('div');
@@ -520,9 +516,6 @@ function addMealCard(text) {
       ${calLine ? `<div class="flex justify-between text-[0.78rem] text-gray-600 mb-0.5 flex-wrap"><span>${calLine.replace('\uD83D\uDCCA ', '').trim()}</span></div>` : ''}
       ${resteLine ? `<div class="text-[0.78rem] font-semibold text-gray-700">${resteLine.trim()}</div>` : ''}
     </div>
-    ${tipLine ? `<div class="px-4 py-3 bg-blue-50 border-t border-blue-200 text-[0.78rem] text-blue-800 leading-relaxed break-words">
-      <strong class="text-blue-900">\uD83D\uDCA1 ${tipLine}</strong><br>${whyLine}
-    </div>` : ''}
     <div class="px-4 py-3 flex flex-col gap-2 border-t border-gray-100">
       <button class="text-sm text-gray-400 underline hover:text-gray-600 transition-colors" onclick="correctMeal(this)">\u270F\uFE0F Corriger les r\u00e9sultats</button>
     </div>
