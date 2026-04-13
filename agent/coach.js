@@ -335,16 +335,29 @@ export async function analyzeMeal(description, imageBase64 = null) {
   const targets = getTodayTargets();
   const consumed = getTodayConsumed();
   const remaining = getRemainingToday();
+  const memory = buildCoachContext();
+  const angle = getAngleForNow();
+  const hour = new Date().getHours();
+  let timeContext = '';
+  if (hour < 10) timeContext = "C'est le matin.";
+  else if (hour < 14) timeContext = "C'est le midi.";
+  else if (hour < 18) timeContext = "C'est l'après-midi — elle bosse devant son Mac.";
+  else if (hour < 21) timeContext = "C'est le soir — dernier repas.";
+  else timeContext = "C'est tard — elle devrait bientôt dormir.";
 
   const prompt = `
 ${imageBase64 ? 'Rachida a pris une photo de son repas. Identifie TOUS les aliments visibles sur la photo.' : `Rachida vient de manger : "${description}"`}
 ${description && imageBase64 ? `Elle ajoute : "${description}"` : ''}
 
 Contexte de sa journée :
+- ${timeContext}
 - Objectif calories : ${targets.calories_target} kcal
 - Déjà consommé : ${consumed.calories} kcal
 - Protéines restantes : ${remaining.protein_g}g
 - Glucides restants : ${remaining.carbs_g}g
+
+Mémoire sur Rachida :
+${memory}
 
 Fais exactement ceci :
 
@@ -354,6 +367,7 @@ Fais exactement ceci :
 4. Additionne le total
 5. Montre le reste de la journée
 6. Si quelque chose semble potentiellement non-halal, signale-le clairement
+7. Écris un champ "coach_reaction" : 2-3 phrases chaleureuses, en français, tutoiement, ton direct et bienveillant comme dans ton system prompt ("ma belle", "habibti" parfois, pas systématiquement). RÉAGIS vraiment à ce qu'elle a mangé — félicite si c'est bien (protéines, légumes, halal), pointe gentiment si c'est trop gras/sucré/tard, propose un mini-ajustement concret. OBLIGATOIRE : relie ce repas à cet angle spécifique : ${angle.instruction}. Zéro JSON dans ce champ, juste du texte naturel. Pas de liste à puces. Pas de slogan bidon. Sois spécifique à CE repas et à CE moment de la journée.
 
 Réponds UNIQUEMENT avec du JSON dans ce format exact :
 {
@@ -406,7 +420,8 @@ Réponds UNIQUEMENT avec du JSON dans ce format exact :
     "protein_g": ${remaining.protein_g},
     "fat_g": ${remaining.fat_g},
     "carbs_g": ${remaining.carbs_g}
-  }
+  },
+  "coach_reaction": "Texte chaleureux de 2-3 phrases qui réagit à CE repas précis et relie à l'angle demandé."
 }
 `;
 
@@ -503,6 +518,10 @@ function formatMealResponse(data, mealType, targets, consumed) {
     output += `\nIl te reste ${remainingCal} kcal pour ce soir.\n`;
   } else {
     output += `\n⚠️ Tu as atteint ton objectif calorique pour aujourd'hui.\n`;
+  }
+
+  if (data.coach_reaction) {
+    output += `\n💬 ${data.coach_reaction}\n`;
   }
 
   return output;

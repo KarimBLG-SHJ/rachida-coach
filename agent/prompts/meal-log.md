@@ -62,6 +62,7 @@ Réponds UNIQUEMENT en JSON valide :
       }
     }
   ],
+  "coach_reaction": "2-3 phrases chaleureuses en français, tutoiement, qui réagissent à CE repas précis. Relier à un angle (cheveux, ventre, sommeil, énergie, moral, faim, peau). Pas de slogan — spécifique à ce qu'elle a mangé et au moment de la journée.",
   "totals": {
     "calories": 523,
     "protein_g": 52,
